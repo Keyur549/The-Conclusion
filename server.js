@@ -80,7 +80,7 @@ const LINES = (() => {
   return L;
 })();
 const WINNER_ORDER = ['line1','line2','line3','line4','line5','full','top3','top2','top1'];
-const WINNER_LABELS = {line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House',top3:'3rd Score',top2:'2nd Score',top1:'Overall Champion'};
+const WINNER_LABELS = {line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House',top3:'3rd Score',top2:'2nd Score',top1:'Overall Champion',puzzle:'🧩 Image Winner'};
 
 function defaultQuestions(){ return DEFAULT_QA.map(([q,a]) => ({q,a})); }
 function parseQA(text){
@@ -169,6 +169,15 @@ function fastMap(r){
 }
 
 
+// 🧩 Mystery Image (4x4 = 16 pieces): in each of the 4 phases the first 4 correct answers give 4 pieces. Complete only after the last phase.
+const PUZ_PER = 4, PUZ_PH = 4;
+function puzzleOf(room,p){
+  const ph=[[],[],[],[]];
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const q=room.questions[qi]; if(!q||q.a!==p.card[+ci]) return; const pos=qPos(room,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k<PUZ_PH) ph[k].push((p.markTs||{})[qi]||0); });
+  const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const got=[]; let last=0, count=0;
+  ph.forEach((a,k)=>{ a.sort((x,y)=>x-y); a.slice(0,PUZ_PER).forEach((t,j)=>{ got.push(perm[k*PUZ_PER+j]); count++; if(t>last) last=t; }); });
+  return {count, got, complete:count===PUZ_PER*PUZ_PH, doneTs: count===PUZ_PER*PUZ_PH?last:null, byPhase:ph.map(a=>Math.min(PUZ_PER,a.length))};
+}
 function playerResults(room, pname, fm){
   const p = room.players[pname];
   const cellState = Array(25).fill('none');
@@ -182,7 +191,7 @@ function playerResults(room, pname, fm){
   const correctCount = cellState.filter(s=>s==='green').length;
   const wrongCount = cellState.filter(s=>s==='red').length;
   const fullHouse = cellState.every(s=>s==='green');
-  const out = { cellState, correctRows, correctCount, wrongCount, fullHouse };
+  const out = { cellState, correctRows, correctCount, wrongCount, fullHouse, puzzle: puzzleOf(room,p) };
   if (fm){
     const cards = p.cards||{};
     // Shield: a wrong answer on the Shield question costs 0 instead of -1
@@ -215,6 +224,8 @@ function computeWinners(room){
     winners[cat+'_ms'] = best?Math.max(0,best.ts-(room.startedAt||room.createdAt)):null; // time taken from game start
     winners[cat+'_tie'] = tied.length>1 ? tied : null; // more than one player claimed validly at the exact same moment
   }
+  { let best=null; for (const [name,p] of Object.entries(room.players)){ const z=puzzleOf(room,p); if(!z.complete) continue; if(!best || z.doneTs<best.ts || (z.doneTs===best.ts && p.joinedAt<best.j)) best={name,ts:z.doneTs,j:p.joinedAt}; }
+    winners.puzzle = best?best.name:null; winners.puzzle_ts = best?best.ts:null; winners.puzzle_ms = best?Math.max(0,best.ts-(room.startedAt||room.createdAt)):null; }
   // Top 3 by Final Score (ties: more correct answers, then fewer wrong, then who joined first)
   const ranked = Object.entries(room.players).map(([name,p])=>({name,p,res:playerResults(room,name,FM)}))
     .sort((a,b)=> b.res.netScore-a.res.netScore || b.res.correctCount-a.res.correctCount || a.res.wrongCount-b.res.wrongCount || a.p.joinedAt-b.p.joinedAt);
@@ -323,7 +334,7 @@ function seen(code,key){ if (key) SEEN[code+'|'+key]=Date.now(); }
 const ONLINE_MS = +process.env.ONLINE_MS || 10000;
 function bindSock(socket, r, code, name){ socket.data = {code, name}; seen(code,name); }
 
-function newPlayerObj(r,name,zone,avatar){ return { card: makeCard(r.questions), baseName: name, zone, avatar: avatar||'🦁', marks:{}, markTs:{}, cards:{}, claims:{}, joinedAt: Date.now() }; }
+function newPlayerObj(r,name,zone,avatar){ return { pzPerm: shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), card: makeCard(r.questions), baseName: name, zone, avatar: avatar||'🦁', marks:{}, markTs:{}, cards:{}, claims:{}, joinedAt: Date.now() }; }
 function newToken(){ return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10); }
 function tokFor(r,key){ if(!r.tokens) r.tokens={}; if(!r.tokens[key]) r.tokens[key]=newToken(); return r.tokens[key]; }
 function tokOwner(r,token){ if(!token||!r.tokens) return null; return Object.keys(r.tokens).find(k=>r.tokens[k]===token && r.players[k]) || null; }

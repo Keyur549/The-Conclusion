@@ -176,6 +176,17 @@ input:focus,select:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3p
 #pj .pjin:has(.pjbar),#pj .pjin:has(.pjbar:not(.side)){padding-bottom:24px!important;padding-left:0!important;padding-right:0!important}
 body.bkdraw #pj .pjbar,body.wvhide #pj .pjbar{display:none!important}
 #pj .pjin.pjin:has(.pjw){padding-left:0!important;padding-right:0!important;padding-bottom:24px!important}
+
+.pzbl{position:relative;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0;border-radius:14px;background:#221436;overflow:hidden}
+.pzcard{position:relative}
+.pzbl:before{content:"";position:absolute;inset:-12px;background:var(--im) center/cover;filter:blur(13px) brightness(.8)}
+.pzbl .pzgr{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);border-radius:14px;overflow:hidden}.pzbl .pzgr b{border:1px solid rgba(255,255,255,.35)}
+.pzbl .pzq{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 4rem Georgia,serif;color:#fff;text-shadow:0 0 24px #000}
+.pzfin{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0}
+.pzt{background-size:400% 400%;border-radius:4px;display:flex;align-items:center;justify-content:center;font-style:normal}.pzt.lk{background:repeating-linear-gradient(45deg,#2a1450 0 6px,#34195e 6px 12px);color:#8f78c4;font-weight:800}
+
+#pj .pzth{position:fixed;right:14px;bottom:14px;width:clamp(84px,13vh,140px);z-index:4;text-align:center;font-size:clamp(.6rem,1.3vh,.8rem);font-weight:800;color:#fde68a;opacity:.95}
+#pj .pzth .pzbl{width:100%;margin:0 0 3px;filter:none}#pj .pzimg{width:min(34vh,280px);aspect-ratio:1;background-size:cover;border-radius:16px;box-shadow:0 0 50px rgba(255,210,120,.8);margin:0 auto}
 </style>
 </head>
 <body>
@@ -1493,7 +1504,7 @@ function loadQAIntoTextarea(){
 let state={code:null, room:null, loginErr:''};
 let hostLoggedIn=false, lastSpokenIdx=null, audioOn=true;
 const IS_HOST=true;
-const WINNER_ORDER=['line1','line2','line3','line4','line5','full','top3','top2','top1','zone'];
+const WINNER_ORDER=['line1','line2','line3','line4','line5','full','top3','top2','top1','zone','puzzle'];
 // ===== Premium reveal music (Web Audio, generated live: no audio files) =====
 const PM=(function(){
   let ctx=null,bus=null,master=null,padT=null,spT=null,fadeT=null,on=true,lastStep=-1,running=false,stoppedFor=-2,ci=0;
@@ -1556,7 +1567,7 @@ const PM=(function(){
   return {sync:sync};
 })();
 function musicSync(r){ try{ PM.sync(r,WINNER_ORDER.length); }catch(e){} }
-const WINNER_LABELS={line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House',top3:'🥉 3rd Score',top2:'🥈 2nd Score',top1:'🥇 Overall Champion',zone:'🏅 Zone Winner'};
+const WINNER_LABELS={line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House',top3:'🥉 3rd Score',top2:'🥈 2nd Score',top1:'🥇 Overall Champion',zone:'🏅 Zone Winner',puzzle:'🧩 Image Winner'};
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 let currentUtterance=null;
@@ -1829,7 +1840,7 @@ function openDashboard(){
   const isWZ=z=>w.zone && w.zone.toLowerCase()===z.toLowerCase();
   const tile=(ico,val,lbl)=>`<div class="dtile"><div class="dico">${ico}</div><div class="dval">${val}</div><div class="dlbl">${lbl}</div></div>`;
   const bar=(label,val,pct,cls,tip)=>`<div class="drow" title="${esc(tip||'')}"><div class="dname">${esc(label)}</div><div class="dtrack"><div class="dfill ${cls||''}" data-w="${Math.max(0,Math.min(100,pct))}"></div></div><div class="dnum">${val}</div></div>`;
-  const wcards=['line1','line2','line3','line4','line5','full','top3','top2','top1','zone'].map(k=>{
+  const wcards=['line1','line2','line3','line4','line5','full','top3','top2','top1','zone','puzzle'].map(k=>{
     const n=w[k]; const isZ=k==='zone'; const pd=(n&&!isZ)?r.players[n]:null;
     let sub=''; if(isZ&&n) sub='સરેરાશ '+w.zone_avg+' · '+w.zone_count+' Players'; else if(/^top/.test(k)&&n) sub='🎯 Final Score '+w[k+'_score']; else if(n&&w[k+'_ms']!=null) sub='⏱ '+fmtDur(w[k+'_ms']);
     return `<div class="dwin ${n?'':'dnone'}"><div class="dwl">${esc(WINNER_LABELS[k])}</div><div class="dwav">${isZ?(n?'🏅':'—'):(pd?avHTML(pd.avatar):'—')}</div><div class="dwn">${n?esc(n):'કોઈ Winner નથી'}</div><div class="dwz">${pd&&pd.zone?esc(pd.zone):''}</div><div class="dws">${sub}</div></div>`; }).join('');
@@ -1871,7 +1882,7 @@ function openDashboard(){
   <h1><span style="-webkit-text-fill-color:initial">🎴</span> જ્ઞાન શોધ – Lucky Card Quiz Championship</h1><div class="dsub">Final Dashboard · Room ${esc(r.code)}</div>
   <div class="dtiles">${tile('👥',total,'કુલ Players')}${tile('🏘️',zs.length,'કુલ Zones')}${tile('❓',r.usedIdx.length+'/'+r.questions.length,'પૂછાયેલા Questions')}${tile('📊',avgAll.toFixed(1),'સરેરાશ Net Score')}${tile('🏆',nets.length?Math.max(...nets):0,'સૌથી વધુ Net Score')}</div>
   <div class="dcard" style="margin-bottom:14px"><h2>🏆 Winners</h2><div class="dwins">${wcards}</div>
-    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center">${['line1','line2','line3','line4','line5','full','top3','top2','top1','zone'].filter(k=>w[k]).map(k=>`<button class="dbtn" onclick="wcShare('${k}')">🖼 ${esc(WINNER_LABELS[k])} Card</button>`).join('')}<button class="dbtn" onclick="wcDownloadAll()">⬇ બધા Cards</button></div></div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center">${['line1','line2','line3','line4','line5','full','top3','top2','top1','zone','puzzle'].filter(k=>w[k]).map(k=>`<button class="dbtn" onclick="wcShare('${k}')">🖼 ${esc(WINNER_LABELS[k])} Card</button>`).join('')}<button class="dbtn" onclick="wcDownloadAll()">⬇ બધા Cards</button></div></div>
   <div class="dgrid">
     <div class="dcard"><h2>👥 Zone-wise Players Joined</h2>${zs.slice().sort((a,b)=>b.count-a.count).map(z=>bar(z.zone,z.count,z.count/maxCnt*100,'',z.zone+': '+z.count+' Players')).join('')||'<div class="dsub">ડેટા નથી</div>'}</div>
     <div class="dcard"><h2>🏅 Zone-wise સરેરાશ Net Score</h2>${zs.map(z=>bar(z.zone+(isWZ(z.zone)?' 🏆':''),z.avg.toFixed(1),z.avg/maxAvg*100,isWZ(z.zone)?'gold':'teal',z.zone+': સરેરાશ '+z.avg.toFixed(2)+' · કુલ '+z.total)).join('')||'<div class="dsub">ડેટા નથી</div>'}</div>
@@ -2016,7 +2027,7 @@ async function wcShare(k){
   wcDownload(k);
 }
 async function wcDownloadAll(){
-  for(const k of ['line1','line2','line3','line4','line5','full','top3','top2','top1','zone']){ if((state.room.winners||{})[k]){ await wcDownload(k); await new Promise(r=>setTimeout(r,500)); } }
+  for(const k of ['line1','line2','line3','line4','line5','full','top3','top2','top1','zone','puzzle']){ if((state.room.winners||{})[k]){ await wcDownload(k); await new Promise(r=>setTimeout(r,500)); } }
 }
 
 // ================= Thank-You Cards (for every participant) =================
@@ -2096,6 +2107,7 @@ async function downloadExcel(){
   });
   ['top1','top2','top3'].forEach(k=>{ const n=w[k]; const pd=n?r.players[n]:null; const row=ws2.addRow({cat:WINNER_LABELS[k],name:n||'— (કોઈ Winner નથી)',zone:pd?pd.zone||'':'',dur:n?('Final Score: '+w[k+'_score']+' (સાચા '+w[k+'_correct']+', ખોટા '+w[k+'_wrong']+')'):''}); row.alignment={horizontal:'center'}; row.getCell('cat').font={bold:true}; if(n) row.getCell('name').fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFD700'}}; });
   { const row=ws2.addRow({cat:WINNER_LABELS.zone,name:w.zone||'— (કોઈ Winner નથી)',zone:w.zone||'',dur:w.zone?('સરેરાશ Net: '+w.zone_avg+' (કુલ '+w.zone_total+', '+w.zone_count+' Players)'):''}); row.alignment={horizontal:'center'}; row.getCell('cat').font={bold:true}; if(w.zone) row.getCell('name').fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFD700'}}; }
+  { const n=w.puzzle; const pd=n?r.players[n]:null; const row=ws2.addRow({cat:WINNER_LABELS.puzzle,name:n||'— (કોઈ Winner નથી)',zone:pd?pd.zone||'':'',dur:n?fmtDur(w.puzzle_ms):'',clock:n?fmtTime(w.puzzle_ts):''}); row.alignment={horizontal:'center'}; row.getCell('cat').font={bold:true}; if(n) row.getCell('name').fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFD700'}}; }
   const ws3=wb.addWorksheet('Zones');
   ws3.columns=[{header:'Rank',key:'rank',width:7},{header:'Zone',key:'zone',width:22},{header:'Players',key:'count',width:10},{header:'Total Net',key:'total',width:12},{header:'Average Net',key:'avg',width:13}];
   ws3.getRow(1).eachCell(c=>{ c.font={bold:true,color:{argb:'FFFFFFFF'},size:12}; c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF7C3AED'}}; c.alignment={horizontal:'center'}; });
@@ -2452,7 +2464,8 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   if(w[k+'_score']!=null)o+=(o?' · ':'')+'🎯 Score '+esc2(w[k+'_score']);
   if(ts){try{o+=(o?' · ':'')+'🕒 '+new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch(e){}}
   return (o||tie)?'<div class="pjclaim">'+o+(tie?'<small>⚖️ Tie-break: '+esc2(tie===true?'સૌથી પહેલા Claim':tie)+'</small>':'')+'</div>':''}
- function html(r){var st=r.status;
+ function html(r){var h=html_(r);try{var st=r.status;if(['active','spinning','revealing','question','locked','box','ended'].indexOf(st)>=0)h+='<div class="pzth"><div class="pzbl" style="--im:url(/puzzle.jpg)"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq" style="font-size:2rem">?</div></div>🧩 Mystery Image</div>'}catch(e){}return h}
+ function html_(r){var st=r.status;
   if(st==='active'||st==='spinning'||st==='revealing'||st==='locked'){
    var fastB=(st==='revealing'&&r.betEnd&&isFastQ(r,r.curIdx)),pdn=(st==='locked'&&phaseDone(r)),betN=fastB?Object.values(r.players||{}).filter(function(x){return x.bets&&x.bets[r.curIdx]}).length:0,betL=fastB?Math.max(0,Math.ceil((r.betEnd-Date.now())/1000)):0;
    return '<div class="pjh">જ્ઞાન શોધ</div>'+(fastB?'<div class="pjfire">⚡ FAST ROUND · PHASE '+phaseInfo(r).ph+' — 💰 Bet લગાવવાનો સમય '+betL+'s</div>':(pdn?'<div class="pjfire" style="background:linear-gradient(90deg,#0f766e,#14532d);animation:none">🏁 PHASE '+phaseInfo(r).ph+' પૂરો — હવે PHASE '+(Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1)+' શરૂ કરો</div>':(st==='revealing'||st==='locked')&&r.curIdx!=null?'<div class="pjs">'+esc2(phLabel(r))+'</div>':''))+(st==='locked'&&!pdn?'<div class="pjfire" style="background:linear-gradient(90deg,#475569,#1e293b);box-shadow:none;animation:none">⏱ સમય પૂરો — હવે Spin દબાવો</div>':'')+stage(r)+(st==='active'&&!(r.usedIdx||[]).length?'<div class="pjs">Game શરૂ થાય છે…</div>':'')+(st==='revealing'?(fastB?'<div class="pjs">💰 '+betN+' Players એ Bet લગાવી · પ્રશ્ન હજી છુપો છે…</div>':'<div class="pjs">હવે પ્રશ્ન આવે છે…</div>'):'')+bars(r)+ctl(r)}
@@ -2466,6 +2479,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   if((st==='question'||st==='locked')&&r.curIdx!=null)h=h.replace('<div class="pjh">','<div class="pjchip">🎡 નંબર '+(r.curIdx+1)+'</div><div class="pjh">');
   if(st==='revealed'){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[],step=r.revealStep||0;
    if(step>=1&&step<=O.length){var k=O[step-1],nm=(r.winners||{})[k];
+    if(k==='puzzle')h=h.replace('<div class="pjav">','<div class="pzimg" style="background-image:url(/puzzle.jpg)"></div><div class="pjav">');
     h=h.replace('class="pjw"','class="pjw pjgrand"')+(nm?claim(r,k)+'<div class="pjfw">🎉🎊🥳🎊🎉</div>'+conf(step*7+3):'')}
    else if(step>O.length)h+=conf(99)}
   return h+ctl(r)}

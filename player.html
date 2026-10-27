@@ -138,6 +138,14 @@ input:focus,select:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3p
 .pr-cl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.pr-cl .btn{margin:0;padding:10px 4px;font-size:.8rem}.tip2{background:#fff7dc;color:#4a3a00;border-left:4px solid #f59e0b;border-radius:8px;padding:6px 9px;margin:8px 0;font-size:.82rem;font-weight:600}
 .avpick{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:6px 0 10px}.avp{aspect-ratio:1;border:2px solid var(--line);border-radius:12px;background:var(--card);padding:3px;cursor:pointer;font-size:1.7rem;display:grid;place-items:center}.avp.sel{border-color:var(--p);box-shadow:0 0 0 3px rgba(var(--rg),.3);background:rgba(var(--rg),.1)}
 @media (max-width:420px){.avpick{grid-template-columns:repeat(4,1fr)}}
+
+.pzbl{position:relative;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0;border-radius:14px;background:#221436;overflow:hidden}
+.pzcard{position:relative}
+.pzbl:before{content:"";position:absolute;inset:-12px;background:var(--im) center/cover;filter:blur(13px) brightness(.8)}
+.pzbl .pzgr{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);border-radius:14px;overflow:hidden}.pzbl .pzgr b{border:1px solid rgba(255,255,255,.35)}
+.pzbl .pzq{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 4rem Georgia,serif;color:#fff;text-shadow:0 0 24px #000}
+.pzfin{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0}
+.pzt{background-size:400% 400%;border-radius:4px;display:flex;align-items:center;justify-content:center;font-style:normal}.pzt.lk{background:repeating-linear-gradient(45deg,#2a1450 0 6px,#34195e 6px 12px);color:#8f78c4;font-weight:800}
 </style>
 </head>
 <body>
@@ -147,7 +155,7 @@ input:focus,select:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3p
 const socket = io();
 const EMOJI_LIST=['🦁','🐯','🐼','🐵','🦊','🐸','🐧','🦉','🐢','🐝','🌸','⭐','🔥','🚀','👑','🎯'];
 const IS_HOST=false;
-const WINNER_ORDER=['line1','line2','line3','line4','line5','full','top3','top2','top1','zone'];
+const WINNER_ORDER=['line1','line2','line3','line4','line5','full','top3','top2','top1','zone','puzzle'];
 // ===== Premium reveal music (Web Audio, generated live: no audio files) =====
 const PM=(function(){
   let ctx=null,bus=null,master=null,padT=null,spT=null,fadeT=null,on=true,lastStep=-1,running=false,stoppedFor=-2,ci=0;
@@ -210,7 +218,7 @@ const PM=(function(){
   return {sync:sync};
 })();
 function musicSync(r){ try{ PM.sync(r,WINNER_ORDER.length); }catch(e){} }
-const WINNER_LABELS={line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House',top3:'🥉 3rd Score',top2:'🥈 2nd Score',top1:'🥇 Overall Champion',zone:'🏅 Zone Winner'};
+const WINNER_LABELS={line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House',top3:'🥉 3rd Score',top2:'🥈 2nd Score',top1:'🥇 Overall Champion',zone:'🏅 Zone Winner',puzzle:'🧩 Image Winner'};
 const prefillCode=(new URLSearchParams(location.search).get('code')||'').toUpperCase();
 let state={
   screen:'join',
@@ -371,6 +379,26 @@ function betSpeed(r,p,pname,cellState,fm){
 
 function phaseInfo(r){ const i=r.curIdx!=null?qPos(r,r.curIdx):-1, n=(r.usedIdx||[]).length, tot=Math.max(1,Math.ceil((r.questions||[]).length/PHASE_LEN));
   const ph=i>=0?Math.floor(i/PHASE_LEN)+1:Math.floor(n/PHASE_LEN)+1; return {ph:Math.min(ph,tot),tot,fast:i>=0&&isFastQ(r,r.curIdx),k:i>=0?(i%PHASE_LEN)+1:0}; }
+
+/* 🧩 Mystery Image (4x4): each phase = 4 pieces. Shown BLURRED all game, revealed at the end. */
+const PUZ_IMG='/puzzle.jpg', PUZ_PER=4, PUZ_PH=4;
+function puzzleOf(r,p){
+  const ph=[[],[],[],[]];
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const q=r.questions[qi]; if(!q||q.a===undefined||q.a!==p.card[+ci]) return; const pos=qPos(r,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k<PUZ_PH) ph[k].push((p.markTs||{})[qi]||0); });
+  const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const got=[]; let count=0;
+  ph.forEach((a,k)=>{ a.sort((x,y)=>x-y); a.slice(0,PUZ_PER).forEach((t,j)=>{ got.push(perm[k*PUZ_PER+j]); count++; }); });
+  return {count,got,complete:count===PUZ_PER*PUZ_PH};
+}
+function puzTile(t,clear){ return '<i class="pzt'+(clear?'':' lk')+'" style="'+(clear?'background-image:url('+PUZ_IMG+');background-position:'+((t%4)*100/3)+'% '+(Math.floor(t/4)*100/3)+'%':'')+'">'+(clear?'':'?')+'</i>'; }
+function puzBoxHTML(r){
+  const n=(r.usedIdx||[]).length, ph=Math.min(PUZ_PH,Math.floor(n/PHASE_LEN)+(n%PHASE_LEN||n===0?1:0))||1;
+  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image <span class="muted">· Phase '+Math.min(PUZ_PH,Math.max(1,ph))+'/4</span></div><div class="pzbl" style="--im:url('+PUZ_IMG+')"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq">?</div></div><div class="muted" style="text-align:center;margin-top:6px">દરેક Phase ના 4 સાચા જવાબ = 4 ટુકડા. ચિત્ર છેલ્લે ખુલશે! 🤫</div></div>';
+}
+function puzFinalHTML(r,p){
+  const z=puzzleOf(r,p), s={}; z.got.forEach(t=>s[t]=1);
+  let h=''; for(let t=0;t<16;t++) h+=puzTile(t,!!s[t]);
+  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image — તમારા ટુકડા '+z.count+'/16</div><div class="pzfin">'+h+'</div>'+(z.complete?'<div style="text-align:center;font-weight:800;color:#15803d;margin-top:6px">🎉 ચિત્ર પૂરું થયું!</div>':'<div class="muted" style="text-align:center;margin-top:6px">ચિત્ર પૂરું કરવા દરેક Phase ના 4 સાચા જવાબ જોઈએ.</div>')+'</div>';
+}
 function phaseDone(r){ const n=(r.usedIdx||[]).length; return n>0 && n%PHASE_LEN===0 && n<(r.questions||[]).length; }
 function phLabel(r){ const x=phaseInfo(r); return x.fast?('⚡ FAST ROUND · PHASE '+x.ph):('PHASE '+x.ph+' · પ્રશ્ન '+x.k+'/'+(PHASE_LEN-1)); }
 
@@ -555,7 +583,7 @@ function tyCanvas(d){ return tyDraw(d); }
 
 function wcMine(){
   const r=state.room,w=r.winners||{},n=state.name,pl=r.players[n]; const out=[];
-  ['line1','line2','line3','line4','line5','full','top3','top2','top1'].forEach(k=>{ if(w[k]===n){
+  ['line1','line2','line3','line4','line5','full','top3','top2','top1','puzzle'].forEach(k=>{ if(w[k]===n){
     let detail=''; if(/^top/.test(k)) detail='🎯 Final Score '+w[k+'_score']; else if(w[k+'_ms']!=null) detail='⏱ '+fmtDur(w[k+'_ms'])+' માં';
     out.push({k,label:WINNER_LABELS[k].replace(/^[^\w઀-૿]+/,'').trim()||WINNER_LABELS[k],name:pl.baseName||n,zone:pl.zone||'',avatar:pl.avatar||'🏆',detail,code:r.code}); }});
   if(w.zone && pl.zone && w.zone===pl.zone) out.push({k:'zone',label:'Zone Winner',name:pl.baseName||n,zone:pl.zone,avatar:'🏅',detail:'સરેરાશ Net Score '+w.zone_avg+' · '+w.zone_count+' Players',code:r.code});
@@ -739,7 +767,7 @@ function scMsgWith(M){
   const fill=(t,v)=>String(t||'').replace(/\{n\}/g,v);
   const missed=res.cellState.filter(x=>x==='yellow').length;
   const claims=Object.values(pl.claims||{}), invalid=claims.filter(c=>c.valid===false).length;
-  const wins=['line1','line2','line3','line4','line5','full','top3','top2','top1'].some(k=>w[k]===state.name);
+  const wins=['line1','line2','line3','line4','line5','full','top3','top2','top1','puzzle'].some(k=>w[k]===state.name);
   const L=M.levels; const _old=[25,20,15,10,1,0], _same=_old.every((v,i)=>Number(L[i].min)===v), _mins=_same?[32,24,17,10,3,0]:L.map(l=>Number(l.min)); let ti=L.length-1; for(let i=0;i<L.length-1;i++){ if(n>=_mins[i]){ ti=i; break; } }
   const lv=L[ti], T=M.tips;
   const tips=[];
@@ -943,6 +971,7 @@ function render(){
   if(['question','locked','spinning','revealing','active'].includes(r.status)) body+=`<div class="card">${powerHTML(r,p)}</div>`;
   if(r.status==='locked') body+=phaseDone(r)?`<div class="card" style="text-align:center;font-weight:800">🏁 PHASE ${phaseInfo(r).ph} પૂરો!<div class="muted">હવે PHASE ${Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1} ની રાહ જુઓ — Host શરૂ કરશે.</div></div>`:`<div class="card muted">⏱ સમય પૂરો — next question ની રાહ જુઓ.</div>`;
   if(r.status==='ended') body+=`<div class="card muted">Game પૂરી — results ની રાહ જુઓ.</div>`;
+  if(['question','locked','spinning','revealing','active','ended'].includes(r.status)) body+=puzBoxHTML(r);
 
   let cellState=Array(25).fill(null);
   if(r.status==='revealed'){ cellState=playerResults(state.name).cellState; }
@@ -988,6 +1017,7 @@ function render(){
     ${step>WINNER_ORDER.length?wcMineHTML()+'<div style="margin-top:10px;padding:12px;border-radius:14px;background:#fdf2f8;text-align:center"><div style="font-size:1.15rem;font-weight:800">🙏 ભાગ લેવા બદલ ધન્યવાદ!</div><div class="muted">તમારું Thank You Card મેળવો</div><button class="btn secondary" onclick="tyMine()">🖼 મારું Thank You Card</button></div>'+(scOn()?'<div style="margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#fce7f3);text-align:center"><div style="font-size:1.15rem;font-weight:800">🎁 તમારું Scratch Card</div><div class="muted">'+(scOn()?'તમારા માટે ખાસ સંદેશ – ઘસીને જુઓ!':'🔒 Host Scratch Card ખોલશે ત્યારે ખુલશે')+'</div><button class="btn" onclick="scOpen()">'+(scOn()?'🎁 Scratch કરો':'🔒 Scratch Card')+'</button></div>':'')+'':''}
     </div>`;
     const revMap={}; Object.entries(p.marks).forEach(([ci,qi])=>{revMap[qi]=+ci;});
+    body+=puzFinalHTML(r,p);
     body+=`<div class="card overflow"><h2>તમારો Summary (${res.correctCount} Correct / ${res.wrongCount} Wrong)</h2>
     <div style="text-align:center;margin:8px 0 12px;padding:14px;border-radius:16px;background:${res.netScore<0?'#fee2e2':'#dcfce7'}">
       <div style="font-size:.95rem;font-weight:700;color:#444">🎯 Net Score</div>

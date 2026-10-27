@@ -1,3 +1,10 @@
+
+## 🆕 Conclusion: 🧩 Mystery Image
+- Darek player na Lucky Card na sacha javab ma thi darek Phase na pehla 4 sacha javab = 4 tukda (4 Phase x 4 = 16)
+- Image game dar-miyan blur dekhay chhe, last ma j reveal thay chhe
+- Sauthi pehla 16 tukda complete karnar = 🧩 Image Winner (extra winner, last ma reveal)
+- Image badalvi hoy to puzzle.jpg (square) replace karo
+Upload only: server.js, host.html, player.html, puzzle.jpg
 ## 🆕 Epilogue: Kalash fix
 - Spin dabavta jhuno water drop jatu rahe chhe, nava drop ma navo number aave chhe
 Upload only: server.js, host.html, player.html
