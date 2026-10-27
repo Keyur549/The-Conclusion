@@ -1,3 +1,28 @@
+## 🆕 Epilogue: Kalash fix
+- Spin dabavta jhuno water drop jatu rahe chhe, nava drop ma navo number aave chhe
+Upload only: server.js, host.html, player.html
+
+## 🆕 Epilogue: Premium 🏺 Amrut Kalash
+- Draw methods fakt 🏺 Kalash ane 🎡 Wheel (Ball/Dice/Slot kadhi nakhya)
+- Number have fakt water drop ma dekhay chhe, side ma nahi
+Upload only: server.js, host.html, player.html
+
+## 🆕 Epilogue: 🏺 Amrut Kalash draw
+- Question number have Amrut Kalash mathi amrut bindu (tipu) tapkine nikle chhe
+- Default draw 🏺; Wheel/Ball/Dice/Slot pan host buttons thi select thai shake
+Upload only: server.js, host.html, player.html
+
+## 🆕 Epilogue: Mystery Question, Zone Vote, Photo/Audio Round
+- 🎁 3 secret Mystery Question: sacho jawab to random +1/+2/+3 (Reveal par khule)
+- 🗳 2 Zone Vote question: Zone no bahumat jawab sacho to Zone ne +3
+- 📸/🎵 Photo/Audio Round: projector par moti photo, geet aapo-aap chale
+Upload only: server.js, host.html, player.html
+
+## 🆕 Epilogue: Safety Net pacho (Akshar kadhyu)
+- Life lines: Safety Net, Madad, Change, Bonus Streak, Recharge
+- Safety Net: te question par Zone ni Lock limit ochhi thay (host ni Zone rule ma set %)
+Upload only: server.js, host.html, player.html
+
 ## 🆕 Conclusion: Phases + Fast Round Bet
 - 4 Phase = 8 normal + 9mo Fast Round; projector/host parthi Phase 2,3,4 shuru
 - Fast Round par Bet (sacho +10, khoto/na aapyo -5), Top-3 speed +3/+2/+1
