@@ -380,6 +380,7 @@ function betSpeed(r,p,pname,cellState,fm){
   return {betPts,speedPts,bets};
 }
 
+function qNo(r,idx){ try{ const P=r.pools||[]; for(let k=0;k<P.length;k++){ const j=P[k].indexOf(idx); if(j>=0) return j+1; } }catch(e){} return idx+1; }
 function phaseInfo(r){ const i=r.curIdx!=null?qPos(r,r.curIdx):-1, n=(r.usedIdx||[]).length, tot=Math.max(1,Math.ceil((r.questions||[]).length/PHASE_LEN));
   const ph=i>=0?Math.floor(i/PHASE_LEN)+1:Math.floor(n/PHASE_LEN)+1; return {ph:Math.min(ph,tot),tot,fast:i>=0&&isFastQ(r,r.curIdx),k:i>=0?(i%PHASE_LEN)+1:0}; }
 
@@ -415,7 +416,7 @@ function puzFinalHTML(r,p){
   return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image — તમારા ટુકડા '+z.count+'/16</div><div class="pzfin">'+h+'</div>'+(z.complete?'<div style="text-align:center;font-weight:800;color:#15803d;margin-top:6px">🎉 ચિત્ર પૂરું થયું!</div>':'<div class="muted" style="text-align:center;margin-top:6px">ચિત્ર પૂરું કરવા દરેક Phase ના 4 સાચા જવાબ જોઈએ.</div>')+'</div>';
 }
 function phaseDone(r){ const n=(r.usedIdx||[]).length; return n>0 && n%PHASE_LEN===0 && n<(r.questions||[]).length; }
-function phLabel(r){ const x=phaseInfo(r); return x.fast?('⚡ FAST ROUND · PHASE '+x.ph):('PHASE '+x.ph+' · પ્રશ્ન '+x.k+'/'+(PHASE_LEN-1)); }
+function phLabel(r){ const x=phaseInfo(r); return x.fast?('⚡ FAST ROUND · PHASE '+x.ph):('PHASE '+x.ph+' · પ્રશ્ન '+qNo(r,r.curIdx)); }
 
 function markCell(p,qi){ const k=Object.keys(p.marks).find(k=>p.marks[k]===qi); return k===undefined?undefined:+k; }
 function answerOnCard(r,p,qi){ const q=r.questions[qi]; return !!(q&&q.a!==undefined&&p.card.includes(q.a)); }
@@ -971,10 +972,10 @@ function render(){
   if(r.status==='spinning') body+=`<div class="card"><div class="qtext">🃏 Host Card Draw કરી રહ્યા છે...</div></div>`;
   if(r.status==='revealing'){ const ph=phaseInfo(r);
     if(ph.fast&&r.betEnd){ const left=Math.max(0,Math.ceil((r.betEnd-Date.now())/1000)), on=!!(p.bets&&p.bets[r.curIdx])||state.betQ===r.curIdx&&state.betOn;
-      body+=`<div class="card numpop" style="border:3px solid #f59e0b"><div class="lbl">⚡ FAST ROUND · PHASE ${ph.ph}</div><div class="num">${r.curIdx+1}</div><div class="muted">પ્રશ્ન હજી છુપો છે! Bet લગાવવાનો સમય: <b>${left}s</b></div>
+      body+=`<div class="card numpop" style="border:3px solid #f59e0b"><div class="lbl">⚡ FAST ROUND · PHASE ${ph.ph}</div><div class="num">${qNo(r,r.curIdx)}</div><div class="muted">પ્રશ્ન હજી છુપો છે! Bet લગાવવાનો સમય: <b>${left}s</b></div>
       <div style="margin:10px 0;font-weight:700">💰 5 ની Bet: જવાબ સાચો → <span style="color:#16a34a">+10</span> · ખોટો / ન આપ્યો → <span style="color:#dc2626">−5</span><br><small class="muted">(જવાબ તમારા Card માં ન હોય તો Bet આપોઆપ રદ — કોઈ નુકસાન નહિ. Bet હોય તો ⚡ Speed Bonus ન મળે.)</small></div>
       <button class="btn" style="${on?'background:#16a34a':'background:linear-gradient(135deg,#f59e0b,#dc2626)'}" onclick="placeBet(${on?'false':'true'})">${on?'✅ Bet લગાવી છે (રદ કરવા દબાવો)':'💰 Bet લગાવો'}</button></div>`; }
-    else body+=`<div class="card numpop"><div class="lbl">${esc(phLabel(r))}</div><div class="num">${r.curIdx+1}</div></div>`; }
+    else body+=`<div class="card numpop"><div class="lbl">${esc(phLabel(r))}</div><div class="num">${qNo(r,r.curIdx)}</div></div>`; }
   if(r.status==='question'){
     const remain=r.paused?Math.ceil((r.pausedMs||0)/1000):Math.max(0,Math.ceil((r.timerEnd-Date.now())/1000));
     body+=`<div class="card" style="text-align:center;font-weight:800;color:${phaseInfo(r).fast?'#b45309':'#0f766e'}">${esc(phLabel(r))}${phaseInfo(r).fast&&p.bets&&p.bets[r.curIdx]?' · 💰 Bet લગાવી છે':''}</div>`;

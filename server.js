@@ -106,12 +106,12 @@ function parseQA(text){
   return { questions: out.length?out:defaultQuestions(), bad, usedDefault: out.length===0 };
 }
 function shuffle(a){ const arr=a.slice(); for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
-// Phase pools: the questions are split (once, at room creation) into phase 1..4 of 9 questions each. A player's card of 25 answers
+// Phase pools: the question list is split into phase 1..4 of 9 questions each (1-9, 10-18, 19-27, 28-36). A player's card of 25 answers
 // holds 6 answers of phase 1, 6 of phase 2, 6 of phase 3 and 7 of phase 4 — any 4 correct of a phase's 6 (or 7) give that phase's 4 puzzle pieces.
 const CARD_QUOTA = [6,6,6,7];
 function ensurePools(r){
   if (r.pools && r.pools.length) return r.pools;
-  const idx = shuffle(r.questions.map((_,i)=>i)), P=[];
+  const idx = r.questions.map((_,i)=>i), P=[];   // Phase 1 = questions 1-9, Phase 2 = 10-18 ... (in the order of the question list)
   for (let i=0;i<idx.length;i+=9) P.push(idx.slice(i,i+9));
   if (P.length>4){ P[3]=P[3].concat(...P.slice(4)); P.length=4; }   // extra questions (more than 36) join the last phase
   r.pools = P; return P;
@@ -542,7 +542,7 @@ io.on('connection', (socket) => {
   socket.on('host:start', ({code}) => { const r=rooms[code]; if(!r) return; r.joinEnd=null; if(!r.botsPlay) for(const k of Object.keys(r.players)) if(r.players[k].bot) delete r.players[k]; r.status='active'; if(!r.startedAt) r.startedAt=Date.now(); broadcast(code); });
 
   const REVEAL_MS=1600;       // how long the big number popup stays up before the question appears
-  const SPIN_SAFETY_MS=6000;  // safety net only — if host's browser never confirms, auto-advance so the game can't get stuck
+  const SPIN_SAFETY_MS=9000;  // safety net only — if host's browser never confirms, auto-advance so the game can't get stuck
   socket.on('host:spin', ({code}) => {
     const r = rooms[code]; if(!r) return;
     if(r.status!=='active' && r.status!=='locked') return; // ignore duplicate/racing spin clicks — fixes skipped questions
