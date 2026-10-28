@@ -106,10 +106,27 @@ function parseQA(text){
   return { questions: out.length?out:defaultQuestions(), bad, usedDefault: out.length===0 };
 }
 function shuffle(a){ const arr=a.slice(); for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
-function makeCard(questions){
-  let pool = shuffle(questions.map(q=>q.a));
-  while (pool.length < 25) pool = pool.concat(shuffle(questions.map(q=>q.a)));
-  return pool.slice(0,25);
+// Phase pools: the questions are split (once, at room creation) into phase 1..4 of 9 questions each. A player's card of 25 answers
+// holds 6 answers of phase 1, 6 of phase 2, 6 of phase 3 and 7 of phase 4 — any 4 correct of a phase's 6 (or 7) give that phase's 4 puzzle pieces.
+const CARD_QUOTA = [6,6,6,7];
+function ensurePools(r){
+  if (r.pools && r.pools.length) return r.pools;
+  const idx = shuffle(r.questions.map((_,i)=>i)), P=[];
+  for (let i=0;i<idx.length;i+=9) P.push(idx.slice(i,i+9));
+  if (P.length>4){ P[3]=P[3].concat(...P.slice(4)); P.length=4; }   // extra questions (more than 36) join the last phase
+  r.pools = P; return P;
+}
+function makeCard(questions, room){
+  const all = questions.map(q=>q.a);
+  let card = [];
+  if (room){
+    const P = ensurePools(room);
+    P.forEach((pool,k)=>{ const want = CARD_QUOTA[k]!=null?CARD_QUOTA[k]:0; shuffle(pool.map(i=>questions[i].a)).filter(a=>!card.includes(a)).slice(0,want).forEach(a=>card.push(a)); });
+  }
+  let rest = shuffle(all).filter(a=>!card.includes(a));
+  while (card.length<25 && rest.length) card.push(rest.shift());
+  while (card.length<25) card.push(...shuffle(all).slice(0,25-card.length));
+  return shuffle(card.slice(0,25));
 }
 function randCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s='GYAN'; for(let i=0;i<4;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; }
 
@@ -169,15 +186,36 @@ function fastMap(r){
 }
 
 
-// 🧩 Mystery Image (4x4 = 16 pieces): in each of the 4 phases the first 4 correct answers give 4 pieces. Complete only after the last phase.
-const PUZ_PER = 4, PUZ_PH = 4;
-function puzzleOf(room,p){
-  const ph=[[],[],[],[]];
-  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const q=room.questions[qi]; if(!q||q.a!==p.card[+ci]) return; const pos=qPos(room,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k<PUZ_PH) ph[k].push((p.markTs||{})[qi]||0); });
-  const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const got=[]; let last=0, count=0;
-  ph.forEach((a,k)=>{ a.sort((x,y)=>x-y); a.slice(0,PUZ_PER).forEach((t,j)=>{ got.push(perm[k*PUZ_PER+j]); count++; if(t>last) last=t; }); });
-  return {count, got, complete:count===PUZ_PER*PUZ_PH, doneTs: count===PUZ_PER*PUZ_PH?last:null, byPhase:ph.map(a=>Math.min(PUZ_PER,a.length))};
+// 🧩 Mystery Image (4x4 = 16 pieces): in each of the 4 phases any 4 correct answers (of the 6 / 7 card answers of that phase) give 4 pieces.
+const PUZ_PH = 4;
+function puzCore(room,p){
+  const bk=[]; for(let k=0;k<PUZ_PH;k++) bk.push([]);
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const q=room.questions[qi]; if(!q||q.a!==p.card[+ci]) return; const pos=qPos(room,qi); if(pos<0) return;
+    const k=Math.floor(pos/PHASE_LEN); if(k>=PUZ_PH) return; bk[k].push((p.markTs||{})[qi]||0); });
+  const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; let last=0, count=0; const tiles=[], byPhase=[];
+  bk.forEach((a,k)=>{ a.sort((x,y)=>x-y); const t=a.slice(0,4).map((ts,j)=>{ count++; if(ts>last) last=ts; return perm[k*4+j]; }); tiles.push(t); byPhase.push(t.length); });
+  return {tiles,count,last,byPhase};
 }
+function puzzleOf(room,p){
+  const c=puzCore(room,p), full=c.count===PUZ_PH*4;
+  return {count:c.count, got:[].concat(...c.tiles), complete:full, doneTs: full?c.last:null, byPhase:c.byPhase};
+}
+function puzPhaseDone(room,k){ const n=(room.usedIdx||[]).length, e=(k+1)*PHASE_LEN; return n>e || (n===e && ['locked','ended','box','opening','revealed'].includes(room.status)); }
+// what a player may already see DURING the game: pieces of finished phases only (pop in at the end of each phase)
+function puzLive(room,p){
+  const c=puzCore(room,p), done=[], got=[], cnt=[];
+  for(let k=0;k<PUZ_PH;k++){ const d=puzPhaseDone(room,k); done.push(d); cnt.push(d?c.tiles[k].length:0); if(d) got.push(...c.tiles[k]); }
+  return {done,got,cnt};
+}
+// Host-supplied images (phase 1-4 for the 3x3 draw, "puzzle" for the 4x4 Mystery Image) live in memory, outside the room state.
+const PZ = {}; const PZ_KEYS=['phase1','phase2','phase3','phase4','puzzle'];
+function pzDefault(key){ const _p=require('path'),_f=require('fs'); for(const d of [_p.join(__dirname,'public'),__dirname]) for(const e of ['jpg','jpeg','png','webp']){ const f=_p.join(d,key+'.'+e); try{ if(_f.statSync(f).isFile()) return f; }catch(x){} } return null; }
+app.get('/pz/:code/:key', (req,res)=>{
+  const {code,key}=req.params; if(!PZ_KEYS.includes(key)) return res.status(404).end();
+  const o=PZ[code]&&PZ[code][key]; res.set('Cache-Control','no-cache');
+  if(o) return res.type(o.type).send(o.buf);
+  const f=pzDefault(key); if(f) return res.sendFile(f); res.status(404).end();
+});
 function playerResults(room, pname, fm){
   const p = room.players[pname];
   const cellState = Array(25).fill('none');
@@ -249,7 +287,7 @@ function computeWinners(room){
 function pubPlayer(room,p){
   const claims = {};
   for (const [k,c] of Object.entries(p.claims||{})) claims[k] = {ts:(c.shownTs||c.ts), marks:c.marks};
-  return {...p, claims, _f: undefined, _c: undefined, stk: streakSlots(room,p)};
+  return {...p, claims, _f: undefined, _c: undefined, stk: streakSlots(room,p), pz: puzLive(room,p)};
 }
 function publicRoom(room){
   // Until results are revealed, never send correct answers or claim validity to browsers.
@@ -334,7 +372,7 @@ function seen(code,key){ if (key) SEEN[code+'|'+key]=Date.now(); }
 const ONLINE_MS = +process.env.ONLINE_MS || 10000;
 function bindSock(socket, r, code, name){ socket.data = {code, name}; seen(code,name); }
 
-function newPlayerObj(r,name,zone,avatar){ return { pzPerm: shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), card: makeCard(r.questions), baseName: name, zone, avatar: avatar||'🦁', marks:{}, markTs:{}, cards:{}, claims:{}, joinedAt: Date.now() }; }
+function newPlayerObj(r,name,zone,avatar){ return { pzPerm: shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]), card: makeCard(r.questions, r), baseName: name, zone, avatar: avatar||'🦁', marks:{}, markTs:{}, cards:{}, claims:{}, joinedAt: Date.now() }; }
 function newToken(){ return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10); }
 function tokFor(r,key){ if(!r.tokens) r.tokens={}; if(!r.tokens[key]) r.tokens[key]=newToken(); return r.tokens[key]; }
 function tokOwner(r,token){ if(!token||!r.tokens) return null; return Object.keys(r.tokens).find(k=>r.tokens[k]===token && r.players[k]) || null; }
@@ -510,7 +548,9 @@ io.on('connection', (socket) => {
     if(r.status!=='active' && r.status!=='locked') return; // ignore duplicate/racing spin clicks — fixes skipped questions
     const avail=[]; for(let i=0;i<r.questions.length;i++) if(!r.usedIdx.includes(i)) avail.push(i);
     if (avail.length===0){ r.status='ended'; broadcast(code); return; }
-    const idx = avail[Math.floor(Math.random()*avail.length)];
+    const _P=ensurePools(r), _k=Math.floor(r.usedIdx.length/PHASE_LEN), _c=(_P[_k]||[]).filter(i=>avail.includes(i));
+    const _src=_c.length?_c:avail;   // draw from the current phase's own 9 questions
+    const idx = _src[Math.floor(Math.random()*_src.length)];
     r.status='spinning'; r.curIdx=idx; r.usedIdx=[...r.usedIdx, idx]; r.timerEnd=null; r.paused=false; r.pausedMs=null; r.lastSpinAt=Date.now();
     broadcast(code);
     // Safety net only: if the host's own wheel never confirms completion (tab closed, crash, etc.),
@@ -546,6 +586,14 @@ io.on('connection', (socket) => {
   socket.on('host:spinComplete', ({code, idx}) => { advanceToRevealing(code, idx); });
 
   // Host: question timer length (10-60 s) and skip the remaining time
+  socket.on('host:setPzImg', ({code,key,data}, cb) => {
+    const r = rooms[code]; if(!r || !PZ_KEYS.includes(key)) return cb&&cb({ok:false});
+    PZ[code]=PZ[code]||{}; r.pzV=r.pzV||{};
+    if(!data){ delete PZ[code][key]; delete r.pzV[key]; broadcast(code); return cb&&cb({ok:true}); }
+    const m=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+\/=]+)$/.exec(String(data)); if(!m) return cb&&cb({ok:false,error:'Image format સાચું નથી'});
+    const buf=Buffer.from(m[2],'base64'); if(buf.length>4e6) return cb&&cb({ok:false,error:'Image બહુ મોટી છે'});
+    PZ[code][key]={buf,type:m[1]}; r.pzV[key]=Date.now(); broadcast(code); cb&&cb({ok:true});
+  });
   socket.on('host:setTimer', ({code, sec}) => {
     const r = rooms[code]; if(!r) return;
     sec = Math.round(+sec); if(!(sec>=10 && sec<=60)) return;

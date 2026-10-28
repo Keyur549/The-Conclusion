@@ -144,6 +144,9 @@ input:focus,select:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3p
 .pzbl:before{content:"";position:absolute;inset:-12px;background:var(--im) center/cover;filter:blur(13px) brightness(.8)}
 .pzbl .pzgr{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);border-radius:14px;overflow:hidden}.pzbl .pzgr b{border:1px solid rgba(255,255,255,.35)}
 .pzbl .pzq{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 4rem Georgia,serif;color:#fff;text-shadow:0 0 24px #000}
+.pzlive .pzt.bl{position:relative;overflow:hidden;background:#221436}.pzlive .pzt.bl u{position:absolute;inset:-8px;background-size:400% 400%;background-repeat:no-repeat;filter:blur(7px) brightness(.9)}
+.pzt.pop{animation:pzpop .8s cubic-bezier(.2,1.4,.3,1) both}@keyframes pzpop{0%{transform:scale(.2) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
+.pzchips{display:flex;gap:6px;justify-content:center;margin-top:8px}.pzchip{padding:2px 10px;border-radius:99px;background:#eee;font-size:.78rem;font-weight:700;color:#64748b}.pzchip.ok{background:#dcfce7;color:#15803d}.pzchip.now{background:#fef3c7;color:#b45309}
 .pzfin{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0}
 .pzt{background-size:400% 400%;border-radius:4px;display:flex;align-items:center;justify-content:center;font-style:normal}.pzt.lk{background:repeating-linear-gradient(45deg,#2a1450 0 6px,#34195e 6px 12px);color:#8f78c4;font-weight:800}
 </style>
@@ -381,22 +384,34 @@ function phaseInfo(r){ const i=r.curIdx!=null?qPos(r,r.curIdx):-1, n=(r.usedIdx|
   const ph=i>=0?Math.floor(i/PHASE_LEN)+1:Math.floor(n/PHASE_LEN)+1; return {ph:Math.min(ph,tot),tot,fast:i>=0&&isFastQ(r,r.curIdx),k:i>=0?(i%PHASE_LEN)+1:0}; }
 
 /* 🧩 Mystery Image (4x4): each phase = 4 pieces. Shown BLURRED all game, revealed at the end. */
-const PUZ_IMG='/puzzle.jpg', PUZ_PER=4, PUZ_PH=4;
-function puzzleOf(r,p){
-  const ph=[[],[],[],[]];
-  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const q=r.questions[qi]; if(!q||q.a===undefined||q.a!==p.card[+ci]) return; const pos=qPos(r,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k<PUZ_PH) ph[k].push((p.markTs||{})[qi]||0); });
-  const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const got=[]; let count=0;
-  ph.forEach((a,k)=>{ a.sort((x,y)=>x-y); a.slice(0,PUZ_PER).forEach((t,j)=>{ got.push(perm[k*PUZ_PER+j]); count++; }); });
-  return {count,got,complete:count===PUZ_PER*PUZ_PH};
+const PUZ_PH=4;
+function puzImg(r){ return '/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0); }
+function puzCoreC(r,p){
+  const bk=[]; for(let k=0;k<PUZ_PH;k++) bk.push([]);
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const q=r.questions[qi]; if(!q||q.a===undefined||q.a!==p.card[+ci]) return; const pos=qPos(r,qi); if(pos<0) return;
+    const k=Math.floor(pos/PHASE_LEN); if(k>=PUZ_PH) return; bk[k].push((p.markTs||{})[qi]||0); });
+  const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; const tiles=[]; let count=0;
+  bk.forEach((a,k)=>{ a.sort((x,y)=>x-y); tiles.push(a.slice(0,4).map((ts,j)=>{ count++; return perm[k*4+j]; })); });
+  return {tiles,count};
 }
-function puzTile(t,clear){ return '<i class="pzt'+(clear?'':' lk')+'" style="'+(clear?'background-image:url('+PUZ_IMG+');background-position:'+((t%4)*100/3)+'% '+(Math.floor(t/4)*100/3)+'%':'')+'">'+(clear?'':'?')+'</i>'; }
+function puzzleOf(r,p){ const c=puzCoreC(r,p); return {count:c.count,got:[].concat(...c.tiles),complete:c.count===16,tiles:c.tiles}; }
+function puzTile(t,clear,im){ const pos=((t%4)*100/3)+'% '+(Math.floor(t/4)*100/3)+'%'; return clear?'<i class="pzt" style="background-image:url('+im+');background-position:'+pos+'"></i>':'<i class="pzt lk">?</i>'; }
+function puzBlTile(t,im,pop){ const pos=((t%4)*100/3)+'% '+(Math.floor(t/4)*100/3)+'%'; return '<i class="pzt bl'+(pop?' pop':'')+'"><u style="background-image:url('+im+');background-position:'+pos+'"></u></i>'; }
+let PZSEEN=0;
 function puzBoxHTML(r){
-  const n=(r.usedIdx||[]).length, ph=Math.min(PUZ_PH,Math.floor(n/PHASE_LEN)+(n%PHASE_LEN||n===0?1:0))||1;
-  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image <span class="muted">· Phase '+Math.min(PUZ_PH,Math.max(1,ph))+'/4</span></div><div class="pzbl" style="--im:url('+PUZ_IMG+')"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq">?</div></div><div class="muted" style="text-align:center;margin-top:6px">દરેક Phase ના 4 સાચા જવાબ = 4 ટુકડા. ચિત્ર છેલ્લે ખુલશે! 🤫</div></div>';
+  const p=(r.players||{})[state.name]||{}, pz=p.pz||{done:[false,false,false,false],got:[],cnt:[0,0,0,0]}, im=puzImg(r);
+  const nd=pz.done.filter(Boolean).length, n=(r.usedIdx||[]).length, ph=Math.min(PUZ_PH,Math.max(1,Math.floor((n-1)/PHASE_LEN)+1));
+  const have={}; pz.got.forEach(t=>have[t]=1);
+  // tiles of the phases that have just finished pop in (only once)
+  const popFrom=PZSEEN; let cells=''; const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+  for(let t=0;t<16;t++){ const k=Math.floor(perm.indexOf(t)/4); cells+=have[t]?puzBlTile(t,im,k>=popFrom):'<i class="pzt lk">?</i>'; }
+  setTimeout(()=>{ PZSEEN=nd; },900);
+  const chips=[0,1,2,3].map(k=>'<span class="pzchip'+(pz.done[k]?' ok':(k+1===ph?' now':''))+'">P'+(k+1)+' '+(pz.done[k]?pz.cnt[k]+'/4':(k+1===ph?'⏳':'·'))+'</span>').join('');
+  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image <span class="muted">· Phase '+ph+'/4</span></div><div class="pzfin pzlive">'+cells+'</div><div class="pzchips">'+chips+'</div><div class="muted" style="text-align:center;margin-top:6px">તમારા Card માં દરેક Phase ના 6 જવાબ છે (Phase 4 ના 7). દરેક Phase ના કોઈ પણ 4 સાચા = 4 ટુકડા. Phase પૂરો થાય ત્યારે ટુકડા ગોઠવાશે — ચિત્ર છેલ્લે ખુલશે! 🤫</div></div>';
 }
 function puzFinalHTML(r,p){
-  const z=puzzleOf(r,p), s={}; z.got.forEach(t=>s[t]=1);
-  let h=''; for(let t=0;t<16;t++) h+=puzTile(t,!!s[t]);
+  const z=puzzleOf(r,p), s={}, im=puzImg(r); z.got.forEach(t=>s[t]=1);
+  let h=''; for(let t=0;t<16;t++) h+=puzTile(t,!!s[t],im);
   return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image — તમારા ટુકડા '+z.count+'/16</div><div class="pzfin">'+h+'</div>'+(z.complete?'<div style="text-align:center;font-weight:800;color:#15803d;margin-top:6px">🎉 ચિત્ર પૂરું થયું!</div>':'<div class="muted" style="text-align:center;margin-top:6px">ચિત્ર પૂરું કરવા દરેક Phase ના 4 સાચા જવાબ જોઈએ.</div>')+'</div>';
 }
 function phaseDone(r){ const n=(r.usedIdx||[]).length; return n>0 && n%PHASE_LEN===0 && n<(r.questions||[]).length; }
@@ -953,7 +968,7 @@ function render(){
   if(!p){ el.innerHTML='<div class="card">Card તૈયાર થઈ રહ્યું છે… (થોડી સેકન્ડ, આપોઆપ ફરી જોડાઈ રહ્યા છીએ)</div>'; autoRejoin(); return; }
   let body=profileHdr(r,p)+zoneBattleHTML(r,p)+(typeof certBtn==='function'?certBtn(r):'');
   if(r.status==='lobby'||r.status==='active') body+=`<div class="card">Host ની રાહ જુઓ…<div style="margin-top:8px"><button class="btn ghost" onclick="pracOpen()">🧪 Practice કરો (3 નકલી પ્રશ્ન)</button></div></div>`;
-  if(r.status==='spinning') body+=`<div class="card"><div class="qtext">🎡 Host Wheel Spin કરી રહ્યા છે...</div></div>`;
+  if(r.status==='spinning') body+=`<div class="card"><div class="qtext">🃏 Host Card Draw કરી રહ્યા છે...</div></div>`;
   if(r.status==='revealing'){ const ph=phaseInfo(r);
     if(ph.fast&&r.betEnd){ const left=Math.max(0,Math.ceil((r.betEnd-Date.now())/1000)), on=!!(p.bets&&p.bets[r.curIdx])||state.betQ===r.curIdx&&state.betOn;
       body+=`<div class="card numpop" style="border:3px solid #f59e0b"><div class="lbl">⚡ FAST ROUND · PHASE ${ph.ph}</div><div class="num">${r.curIdx+1}</div><div class="muted">પ્રશ્ન હજી છુપો છે! Bet લગાવવાનો સમય: <b>${left}s</b></div>

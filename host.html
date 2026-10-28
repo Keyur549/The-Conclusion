@@ -175,6 +175,38 @@ input:focus,select:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3p
 .pjbar .pjtm{flex-direction:row;flex-wrap:wrap;gap:6px;justify-content:center;width:100%}.pjbar .pjtm .lbl{width:100%;text-align:center}
 #pj .pjin:has(.pjbar),#pj .pjin:has(.pjbar:not(.side)){padding-bottom:24px!important;padding-left:0!important;padding-right:0!important}
 body.bkdraw #pj .pjbar,body.wvhide #pj .pjbar{display:none!important}
+/* ---- 🃏 3x3 Phase-image card grid (draw) ---- */
+.pgwrap{width:var(--pgs,300px);max-width:100%;margin:0 auto;text-align:center}
+#pj .pgwrap{--pgs:min(60vh,82vw)}
+.pgph{font-weight:800;letter-spacing:.14em;font-size:.82rem;color:#c9a227;margin-bottom:6px;text-transform:uppercase}
+#pj .pgph{font-size:clamp(.9rem,2.2vh,1.4rem);color:#ffd978}
+.pgx{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2%;aspect-ratio:1;padding:2.6%;border-radius:18px;background:linear-gradient(160deg,#2b1560,#120a2c);box-shadow:0 10px 34px rgba(30,10,70,.45),inset 0 0 0 2px rgba(255,217,120,.35);perspective:900px;transition:gap .8s,padding .8s}
+.pgx.full{gap:0;padding:1.6%}
+.pgc{position:relative;border-radius:10px;transition:transform .5s cubic-bezier(.2,.9,.3,1.2),filter .5s}
+.pgx.full .pgc{border-radius:0}
+.pgc .pgi{position:absolute;inset:0;border-radius:inherit;background-image:var(--im),linear-gradient(135deg,#7c3aed,#f59e0b);background-size:300% 300%,100% 100%;background-repeat:no-repeat}
+.pgc .pgn{position:absolute;right:5%;bottom:4%;min-width:34%;padding:1% 6%;border-radius:99px;background:rgba(20,8,44,.78);color:#ffe9a8;font-size:clamp(.7rem,2.6vw,1.1rem);font-weight:900;text-align:center;box-shadow:0 0 0 1.5px rgba(255,217,120,.6)}
+#pj .pgc .pgn{font-size:clamp(.9rem,3vh,1.9rem)}
+.pgc.on{animation:pgsettle .6s both}
+.pgback{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 40%,#4b2a96,#1c0f47 70%);box-shadow:inset 0 0 0 2px rgba(255,217,120,.55),inset 0 0 0 5px rgba(20,8,44,.9),inset 0 0 0 6.5px rgba(255,217,120,.25);display:flex;align-items:center;justify-content:center;color:#ffd978;font-size:clamp(1.2rem,6vw,2.2rem);text-shadow:0 0 12px rgba(255,200,80,.8)}
+#pj .pgback{font-size:clamp(1.6rem,7vh,3.4rem)}
+.pgc.em .pgback{opacity:.55}
+.pgc.nx .pgback{animation:pgglow 1.6s ease-in-out infinite}
+@keyframes pgglow{50%{box-shadow:inset 0 0 0 2px #ffd978,inset 0 0 0 5px rgba(20,8,44,.9),0 0 22px 4px rgba(255,200,80,.7)}}
+@keyframes pgsettle{0%{transform:scale(1.12);filter:brightness(1.5)}100%{transform:scale(1);filter:none}}
+.pgc.cur{z-index:1}
+.pgc.cur .pgin{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .95s cubic-bezier(.3,.7,.2,1)}
+.pgc.cur .pgf{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:inherit}
+.pgc.cur .pgfr{transform:rotateY(180deg);overflow:hidden}
+.pgc.cur.lift{z-index:6;transform:scale(1.4);filter:drop-shadow(0 0 18px rgba(255,200,80,.9))}
+.pgc.cur.flip .pgin{transform:rotateY(180deg)}
+.pgc.cur.land{transform:scale(1);filter:none}
+.pgc.cur.hit .pgn{animation:pgsettle .6s both}
+.pgc.cur.shake .pgin{animation:pgshake .18s linear infinite}
+@keyframes pgshake{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.pgc.cur .pgn{transition:none}
+body.bkdraw #pj .pgph{opacity:.9}
+
 #pj .pjin.pjin:has(.pjw){padding-left:0!important;padding-right:0!important;padding-bottom:24px!important}
 
 .pzbl{position:relative;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0;border-radius:14px;background:#221436;overflow:hidden}
@@ -186,7 +218,7 @@ body.bkdraw #pj .pjbar,body.wvhide #pj .pjbar{display:none!important}
 .pzt{background-size:400% 400%;border-radius:4px;display:flex;align-items:center;justify-content:center;font-style:normal}.pzt.lk{background:repeating-linear-gradient(45deg,#2a1450 0 6px,#34195e 6px 12px);color:#8f78c4;font-weight:800}
 
 #pj .pzth{position:fixed;right:14px;bottom:14px;width:clamp(84px,13vh,140px);z-index:4;text-align:center;font-size:clamp(.6rem,1.3vh,.8rem);font-weight:800;color:#fde68a;opacity:.95}
-#pj .pzth .pzbl{width:100%;margin:0 0 3px;filter:none}#pj .pzimg{width:min(34vh,280px);aspect-ratio:1;background-size:cover;border-radius:16px;box-shadow:0 0 50px rgba(255,210,120,.8);margin:0 auto}
+#pj .pzth .pzbl{width:100%;margin:0 0 3px;filter:none}#pj .pzimg{width:min(20vh,200px);aspect-ratio:1;background-size:cover;border-radius:16px;box-shadow:0 0 50px rgba(255,210,120,.8);margin:0 auto}
 </style>
 </head>
 <body>
@@ -1700,6 +1732,62 @@ function animateSpinTo(pos,total,idx){
     });
   });
 }
+
+// ---------- 🃏 Phase-image 3x3 card draw (replaces the wheel) ----------
+let GA={idx:null,cls:'',txt:'?'};
+function pgImgUrl(r,k){ const v=(r.pzV||{})['phase'+(k+1)]||0; return '/pz/'+r.code+'/phase'+(k+1)+'?v='+v; }
+function pgInfo(r){
+  const n=(r.usedIdx||[]).length;
+  if(n===0) return {k:0,filled:0,cur:-1,next:(r.status==='lobby'?-1:0)};
+  const k=Math.floor((n-1)/PHASE_LEN), w=(n-1)%PHASE_LEN;
+  if(r.status==='spinning') return {k,filled:w,cur:w,next:-1};
+  if(r.status==='revealing'||r.status==='question') return {k,filled:w+1,cur:-1,next:-1};
+  if(n%PHASE_LEN===0) return {k,filled:PHASE_LEN,cur:-1,next:-1};
+  return {k,filled:w+1,cur:-1,next:w+1};
+}
+function pgPos(j){ return (j%3)*50+'% '+Math.floor(j/3)*50+'%'; }
+function drawStage(r){
+  const I=pgInfo(r), k=I.k, used=r.usedIdx||[]; let cells='';
+  for(let j=0;j<PHASE_LEN;j++){
+    const qi=used[k*PHASE_LEN+j], pos=pgPos(j);
+    if(j<I.filled) cells+=`<div class="pgc on"><i class="pgi" style="background-position:${pos},0 0"></i><b class="pgn">${qi+1}</b></div>`;
+    else if(j===I.cur){ const g=(GA.idx===r.curIdx)?GA:{cls:'',txt:'?'}; cells+=`<div class="pgc cur ${g.cls}"><div class="pgin"><div class="pgf pgback">✦</div><div class="pgf pgfr"><i class="pgi" style="background-position:${pos},0 0"></i><b class="pgn">${g.txt}</b></div></div></div>`; }
+    else cells+=`<div class="pgc ${j===I.next?'nx':'em'}"><div class="pgback">✦</div></div>`;
+  }
+  const shown=Math.min(PHASE_LEN,I.filled+(I.cur>=0?1:0));
+  return `<div class="pgwrap"><div class="pgph">🃏 PHASE ${k+1} · ${shown}/${PHASE_LEN}</div><div class="pgx${I.filled>=PHASE_LEN?' full':''}" style="--im:url('${pgImgUrl(r,k)}')">${cells}</div></div>`;
+}
+function gridDraw(r){
+  const idx=r.curIdx, num=idx+1, total=r.questions.length; GA={idx,cls:'',txt:'?'};
+  spinning=true; render();
+  document.querySelectorAll('.pgwrap').forEach(w=>{ w.outerHTML=drawStage(r); });
+  const cs=()=>Array.from(document.querySelectorAll('.pgc.cur')), add=c=>{ GA.cls=(GA.cls+' '+c).trim(); cs().forEach(e=>e.classList.add(c)); }, rm=c=>{ GA.cls=GA.cls.split(' ').filter(x=>x!==c).join(' '); cs().forEach(e=>e.classList.remove(c)); };
+  const txt=t=>{ GA.txt=t; cs().forEach(e=>{ const b=e.querySelector('.pgn'); if(b) b.textContent=t; }); };
+  let roll=null; const T=[];
+  const at=(ms,f)=>T.push(setTimeout(f,ms));
+  playSpinTicks(2600);
+  requestAnimationFrame(()=>{
+    add('lift'); add('shake');
+    at(900,()=>{ rm('shake'); add('flip'); try{ playTick(); }catch(e){} });
+    at(1900,()=>{ rm('lift'); add('land'); roll=setInterval(()=>txt(1+Math.floor(Math.random()*total)),65); });
+    at(3500,()=>{ clearInterval(roll); txt(num); add('hit'); try{ playFanfare(); }catch(e){} });
+    at(4500,()=>{ if(!spinning) return; GA={idx:null,cls:'',txt:'?'}; spinning=false; render(); socket.emit('host:spinComplete',{code:state.code, idx}); });
+  });
+}
+function pgUpload(key,inp){
+  const f=inp.files&&inp.files[0]; if(!f) return; const img=new Image(), u=URL.createObjectURL(f);
+  img.onload=()=>{ const S=1000, c=document.createElement('canvas'); c.width=c.height=S; const m=Math.min(img.width,img.height), g=c.getContext('2d');
+    g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S); URL.revokeObjectURL(u);
+    socket.emit('host:setPzImg',{code:state.code,key,data:c.toDataURL('image/jpeg',.85)},res=>{ if(res&&!res.ok) alert(res.error||'Upload ન થયું'); }); };
+  img.onerror=()=>alert('આ Image ખુલી નહિ'); img.src=u; inp.value='';
+}
+function pgReset(key){ socket.emit('host:setPzImg',{code:state.code,key,data:null}); }
+function pgSetupHTML(r){
+  const L=[['phase1','Phase 1'],['phase2','Phase 2'],['phase3','Phase 3'],['phase4','Phase 4'],['puzzle','🧩 Mystery']];
+  return `<div class="card"><h2 style="margin:0 0 4px">🖼 Images (ઇચ્છા મુજબ)</h2><div class="muted" style="margin-bottom:8px">Phase 1-4 = 3×3 Card Draw ની Image · 🧩 Mystery = 4×4 Blur Image (Players ને છેલ્લે ખુલે). Upload ન કરો તો Default Images વપરાશે. Image ચોરસ (square) હોય તો સારું.</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">${L.map(([k,t])=>`<div style="width:112px;text-align:center"><div style="width:112px;height:112px;border-radius:12px;overflow:hidden;background:#ddd"><img src="/pz/${r.code}/${k}?v=${(r.pzV||{})[k]||0}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="font-weight:700;font-size:.85rem;margin:4px 0">${t}</div>
+  <label class="btn ghost" style="display:block;padding:4px 6px;min-width:0;font-size:.8rem;cursor:pointer">📤 Upload<input type="file" accept="image/*" style="display:none" onchange="pgUpload('${k}',this)"></label>${(r.pzV||{})[k]?`<button class="btn ghost" style="padding:2px 6px;min-width:0;font-size:.75rem;margin-top:3px" onclick="pgReset('${k}')">↩ Default</button>`:''}</div>`).join('')}</div></div>`;
+}
 // Server drives three synced phases: 'spinning' (wheel turns) -> 'revealing' (big number popup) -> 'question' (full question+timer).
 // Every connected client (host and all players) reacts to the SAME broadcast, so timing always matches exactly.
 function maybeAnimate(r){
@@ -1710,7 +1798,7 @@ function maybeAnimate(r){
     pendingReveal=null; // previous round's number disappears exactly now
     wheelLayout=computeLayout(r);
     const num=r.curIdx+1, pos=wheelLayout.indexOf(num);
-    animateSpinTo(pos<0?0:pos, wheelLayout.length, r.curIdx);
+    gridDraw(r);
   }
   if(r.status==='revealing' && r.curIdx!=null && r.curIdx!==lastRevealIdx){
     lastRevealIdx=r.curIdx;
@@ -2317,23 +2405,23 @@ function render(){
     <div class="row">${Object.keys(r.players).map(n=>`<span class="pill">${r.players[n].avatar||''} ${esc(n)}${r.players[n].zone?' · '+esc(r.players[n].zone):''}</span>`).join('')||'<span class="muted">કોઈ player joined નથી</span>'}</div>
   </div>`;
   if(!spinning) wheelLayout=computeLayout(r);
-  if(r.status==='lobby') body+=`<div class="card"><button class="btn" onclick="hostStart()">▶ Start Game</button></div>`;
+  if(r.status==='lobby') body+=pgSetupHTML(r)+`<div class="card"><button class="btn" onclick="hostStart()">▶ Start Game</button></div>`;
   else if(r.status==='active'||r.status==='locked'){
-    body+=`<div class="card" style="text-align:center">${wheelSVG(wheelLayout,wheelRotation,pendingReveal)}
+    body+=`<div class="card" style="text-align:center">${drawStage(r)}
     <div class="muted" style="margin:6px 0">⏱ Question Time: ${[10,15,20,30,45].map(s=>`<button class="btn ${(r.qSec||30)===s?'':'ghost'}" style="padding:4px 10px;min-width:0;margin:2px" onclick="hostSetTimer(${s})">${s}s</button>`).join('')}</div>
     ${(r.status==='locked'&&phaseDone(r))?`<div class="qtext" style="background:#e6f4f1">🏁 PHASE ${phaseInfo(r).ph} પૂરો</div>`:''}<button class="btn" onclick="hostSpin()" ${spinning?'disabled':''}>${(r.status==='locked'&&phaseDone(r))?'▶ PHASE '+(Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1)+' શરૂ કરો':'🎡 Spin Wheel'}</button> <button class="btn ghost" onclick="hostEnd()">End Game</button>${r.status==='locked'?' <button class="btn ghost" onclick="hostUndo()">↩️ છેલ્લો Question Undo</button>':''}<div class="muted">Used: ${r.usedIdx.length}/${r.questions.length}</div></div>`;
   }
   else if(r.status==='spinning'){
-    body+=`<div class="card" style="text-align:center">${wheelSVG(wheelLayout,wheelRotation,pendingReveal)}
-    <div class="qtext">🎡 Spin થઈ રહ્યું છે...</div></div>`;
+    body+=`<div class="card" style="text-align:center">${drawStage(r)}
+    <div class="qtext">🎡 Card Draw થઈ રહ્યું છે...</div></div>`;
   }
   else if(r.status==='revealing'){
-    body+=`<div class="card" style="text-align:center">${wheelSVG(wheelLayout,wheelRotation,pendingReveal)}</div>`;
+    body+=`<div class="card" style="text-align:center">${drawStage(r)}</div>`;
     body+=`<div class="card numpop"><div class="lbl">🎯 Question Number</div><div class="num">${numberPopup!=null?numberPopup:(r.curIdx+1)}</div></div>`;
     if(r.betEnd&&isFastQ(r,r.curIdx)){ const nb=Object.values(r.players).filter(x=>x.bets&&x.bets[r.curIdx]).length; body+=`<div class="card" style="text-align:center"><b>⚡ FAST ROUND · PHASE ${phaseInfo(r).ph}</b><div class="timer">${Math.max(0,Math.ceil((r.betEnd-Date.now())/1000))}s</div><div class="qtext">💰 ${nb} Players એ Bet લગાવી</div><button class="btn" style="background:#f59e0b;color:#3b2a00" onclick="hostSkipBet()">⏭ Bet બંધ કરો, પ્રશ્ન બતાવો</button></div>`; }
   }
   else if(r.status==='question'){
-    body+=`<div class="card" style="text-align:center">${wheelSVG(wheelLayout,wheelRotation,pendingReveal)}</div>`;
+    body+=`<div class="card" style="text-align:center">${drawStage(r)}</div>`;
     const remain=r.paused?Math.ceil((r.pausedMs||0)/1000):Math.max(0,Math.ceil((r.timerEnd-Date.now())/1000));
     body+=`<div class="card"><div class="qtext">${esc(r.questions[r.curIdx].q)}</div>${r.questions[r.curIdx].img?`<img src="${esc(r.questions[r.curIdx].img)}" style="max-width:100%;max-height:260px;border-radius:12px;margin:8px auto;display:block" onerror="this.style.display='none'">`:''}${qaBtn(r.questions[r.curIdx])}<div class="timer">${remain}s${r.paused?' ⏸':''}</div>${r.paused?'<div class="qtext" style="text-align:center;background:#fff3b0">⏸ Game થોભાવ્યું છે — થોડી રાહ જુઓ</div>':''}
     <button class="btn secondary" onclick='speakQuestion(${JSON.stringify(r.questions[r.curIdx].q)},true)'>🔊 સાંભળો</button>
@@ -2447,7 +2535,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
  function btn(a,t,c){return '<button data-act="'+a+'"'+(c?' class="'+c+'"':'')+'>'+t+'</button>'}
  function ctl(r){var st=r.status,b='';if(st==='spinning'||st==='question'||(st==='revealing'&&!r.betEnd))return '';
   if(st==='lobby')b=(r.joinEnd?btn('jtp','＋1 મિનિટ')+btn('jtx','⏹ Timer બંધ','sk'):btn('jt5','⏱ 5:00 Join Timer શરૂ'))+btn('start','▶ Game શરૂ કરો','go');
-  else if(st==='active'||st==='locked')b=btn('spin',(st==='locked'&&phaseDone(r))?'▶ PHASE '+(Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1)+' શરૂ કરો':'🎡 SPIN','go')+btn('end','🏁 Game પૂરી','sk')+'<div class="pjtm"><span class="lbl">⏱ દરેક પ્રશ્નનો સમય:</span>'+[10,15,20,30,45,60].map(function(t){return btn('t_'+t,t+'s',((r.qSec||30)===t)?'tm cur':'tm')}).join('')+'</div>';
+  else if(st==='active'||st==='locked')b=btn('spin',(st==='locked'&&phaseDone(r))?'▶ PHASE '+(Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1)+' શરૂ કરો':'🃏 DRAW','go')+btn('end','🏁 Game પૂરી','sk')+'<div class="pjtm"><span class="lbl">⏱ દરેક પ્રશ્નનો સમય:</span>'+[10,15,20,30,45,60].map(function(t){return btn('t_'+t,t+'s',((r.qSec||30)===t)?'tm cur':'tm')}).join('')+'</div>';
   else if(st==='revealing'&&r.betEnd)b=btn('skipbet','⏭ Bet બંધ કરો','sk');
   else if(st==='question')b=(r.paused?btn('resume','▶ Resume','go'):btn('pause','⏸ Pause'))+btn('skip','⏭ Time Skip','sk');
   else if(st==='ended')b=btn('reveal','🏆 Result Reveal કરો','go')+btn('dash','📊 Dashboard','sk');
@@ -2456,7 +2544,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   else if(st==='revealed'){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[];b=((r.revealStep||0)<=O.length)?btn('next','⏭ આગળ (Next Winner)','go'):'';if((r.revealStep||0)>O.length)b+=btn('dash','📊 Dashboard','go')+btn('sc',r.scReveal?'✅ Scratch Card Reveal થયું · 🔒 છુપાવો':'🎁 Scratch Card Reveal કરો','go')+btn('xls','⬇ Excel','sk')}
   return b?'<div class="pjbar">'+b+'</div>':''}
  function stage(r){var h='';try{if((!wheelLayout||!spinning)&&typeof computeLayout==='function')wheelLayout=computeLayout(r);
-   h=(typeof drawStage==='function')?drawStage(r):wheelSVG(wheelLayout,wheelRotation,pendingReveal)}catch(e){h=''}
+   h=(typeof drawStage==='function')?drawStage(r):drawStage(r)}catch(e){h=''}
   var n=(typeof pendingReveal!=='undefined'&&pendingReveal!=null&&!spinning&&r.status==='revealing')?pendingReveal:null;
   return '<div class="pjstg"><div class="pjwh">'+h+'</div>'+(n!=null?'<div class="pjnum"><div class="pjs">પ્રશ્ન નંબર</div><div class="pjbig pjw">'+n+'</div></div>':'')+'</div>'}
  function claim(r,k){var w=r.winners||{},ms=w[k+'_ms'],ts=w[k+'_ts'],tie=w[k+'_tie'],o='';
@@ -2464,11 +2552,11 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   if(w[k+'_score']!=null)o+=(o?' · ':'')+'🎯 Score '+esc2(w[k+'_score']);
   if(ts){try{o+=(o?' · ':'')+'🕒 '+new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch(e){}}
   return (o||tie)?'<div class="pjclaim">'+o+(tie?'<small>⚖️ Tie-break: '+esc2(tie===true?'સૌથી પહેલા Claim':tie)+'</small>':'')+'</div>':''}
- function html(r){var h=html_(r);try{var st=r.status;if(['active','spinning','revealing','question','locked','box','ended'].indexOf(st)>=0)h+='<div class="pzth"><div class="pzbl" style="--im:url(/puzzle.jpg)"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq" style="font-size:2rem">?</div></div>🧩 Mystery Image</div>'}catch(e){}return h}
+ function html(r){var h=html_(r);try{var st=r.status;if(['active','spinning','revealing','question','locked','box','ended'].indexOf(st)>=0)h+='<div class="pzth"><div class="pzbl" style="--im:url(/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0)+')"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq" style="font-size:2rem">?</div></div>🧩 Mystery Image</div>'}catch(e){}return h}
  function html_(r){var st=r.status;
   if(st==='active'||st==='spinning'||st==='revealing'||st==='locked'){
    var fastB=(st==='revealing'&&r.betEnd&&isFastQ(r,r.curIdx)),pdn=(st==='locked'&&phaseDone(r)),betN=fastB?Object.values(r.players||{}).filter(function(x){return x.bets&&x.bets[r.curIdx]}).length:0,betL=fastB?Math.max(0,Math.ceil((r.betEnd-Date.now())/1000)):0;
-   return '<div class="pjh">જ્ઞાન શોધ</div>'+(fastB?'<div class="pjfire">⚡ FAST ROUND · PHASE '+phaseInfo(r).ph+' — 💰 Bet લગાવવાનો સમય '+betL+'s</div>':(pdn?'<div class="pjfire" style="background:linear-gradient(90deg,#0f766e,#14532d);animation:none">🏁 PHASE '+phaseInfo(r).ph+' પૂરો — હવે PHASE '+(Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1)+' શરૂ કરો</div>':(st==='revealing'||st==='locked')&&r.curIdx!=null?'<div class="pjs">'+esc2(phLabel(r))+'</div>':''))+(st==='locked'&&!pdn?'<div class="pjfire" style="background:linear-gradient(90deg,#475569,#1e293b);box-shadow:none;animation:none">⏱ સમય પૂરો — હવે Spin દબાવો</div>':'')+stage(r)+(st==='active'&&!(r.usedIdx||[]).length?'<div class="pjs">Game શરૂ થાય છે…</div>':'')+(st==='revealing'?(fastB?'<div class="pjs">💰 '+betN+' Players એ Bet લગાવી · પ્રશ્ન હજી છુપો છે…</div>':'<div class="pjs">હવે પ્રશ્ન આવે છે…</div>'):'')+bars(r)+ctl(r)}
+   return '<div class="pjh">જ્ઞાન શોધ</div>'+(fastB?'<div class="pjfire">⚡ FAST ROUND · PHASE '+phaseInfo(r).ph+' — 💰 Bet લગાવવાનો સમય '+betL+'s</div>':(pdn?'<div class="pjfire" style="background:linear-gradient(90deg,#0f766e,#14532d);animation:none">🏁 PHASE '+phaseInfo(r).ph+' પૂરો — હવે PHASE '+(Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1)+' શરૂ કરો</div>':(st==='revealing'||st==='locked')&&r.curIdx!=null?'<div class="pjs">'+esc2(phLabel(r))+'</div>':''))+(st==='locked'&&!pdn?'<div class="pjfire" style="background:linear-gradient(90deg,#475569,#1e293b);box-shadow:none;animation:none">⏱ સમય પૂરો — હવે Draw દબાવો</div>':'')+stage(r)+(st==='active'&&!(r.usedIdx||[]).length?'<div class="pjs">Game શરૂ થાય છે…</div>':'')+(st==='revealing'?(fastB?'<div class="pjs">💰 '+betN+' Players એ Bet લગાવી · પ્રશ્ન હજી છુપો છે…</div>':'<div class="pjs">હવે પ્રશ્ન આવે છે…</div>'):'')+bars(r)+ctl(r)}
   if(st==='box'){var pk=0,tp=Object.keys(r.players||{}),rm=Math.max(0,Math.ceil(((r.boxEnd||0)-Date.now())/1000));tp.forEach(function(n){if(((r.players[n].boxPick||[])[r.round])!=null)pk++});
    return '<div class="pjh">જ્ઞાન શોધ</div><div class="pjs">ROUND '+((r.round||0)+1)+' પૂરો</div><div class="pjbig">🎁</div><div class="pjs">Mystery Box</div><div class="pjt'+(rm<=10&&!r.boxAuto?' lo':'')+'">'+(r.boxAuto?'⏱':rm+'s')+'</div><div class="pjs">✅ '+pk+' / '+tp.length+' Players એ Box પસંદ કર્યું</div>'+ctl(r)}
   if(st==='opening')return '<div class="pjh">જ્ઞાન શોધ</div><div class="pjbig">🏁</div><div class="pjs">બધા Round પૂરા</div><div class="pjs">Mystery Box ના Result Players ને દેખાય છે</div>'+ctl(r)
@@ -2476,11 +2564,11 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   if(st==='question'){h=h.replace(/<div class="pjs">પ્રશ્ન \d+[^<]*<\/div>/,'<div class="pjs">'+esc2(phLabel(r))+'</div>')}
   if(st==='lobby'){h=h.replace('<div class="pjrow">','<div id="pjjw"></div><div class="pjrow">')}
   if(st==='question'&&!r.paused){h=h.replace('<div class="pjh">',fireChk(r)+'<div class="pjh">')}
-  if((st==='question'||st==='locked')&&r.curIdx!=null)h=h.replace('<div class="pjh">','<div class="pjchip">🎡 નંબર '+(r.curIdx+1)+'</div><div class="pjh">');
+  if((st==='question'||st==='locked')&&r.curIdx!=null)h=h.replace('<div class="pjh">','<div class="pjchip">🃏 નંબર '+(r.curIdx+1)+'</div><div class="pjh">');
   if(st==='revealed'){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[],step=r.revealStep||0;
    if(step>=1&&step<=O.length){var k=O[step-1],nm=(r.winners||{})[k];
-    if(k==='puzzle')h=h.replace('<div class="pjav">','<div class="pzimg" style="background-image:url(/puzzle.jpg)"></div><div class="pjav">');
-    h=h.replace('class="pjw"','class="pjw pjgrand"')+(nm?claim(r,k)+'<div class="pjfw">🎉🎊🥳🎊🎉</div>'+conf(step*7+3):'')}
+    if(k==='puzzle')h=h.replace('<div class="pjav">','<div class="pzimg" style="background-image:url(/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0)+')"></div>'+(nm?claim(r,k):'')+'<div class="pjav">');
+    h=h.replace('class="pjw"','class="pjw pjgrand"')+(nm?(k==='puzzle'?'':claim(r,k))+'<div class="pjfw">🎉🎊🥳🎊🎉</div>'+conf(step*7+3):'')}
    else if(step>O.length)h+=conf(99)}
   return h+ctl(r)}
 
