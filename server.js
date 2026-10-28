@@ -568,20 +568,9 @@ io.on('connection', (socket) => {
   function advanceToRevealing(code, idx){
     const r=rooms[code]; if(!r||r.status!=='spinning'||r.curIdx!==idx) return;
     const fast = isFastQ(r,idx);
-    r.status='revealing'; r.betEnd = fast ? Date.now()+BET_MS : null; broadcast(code);
-    setTimeout(()=>beginQ(code,idx), fast ? BET_MS : REVEAL_MS);
+    r.status='revealing'; r.betEnd=null; broadcast(code);   // Fast-Round Bet removed
+    setTimeout(()=>beginQ(code,idx), REVEAL_MS);
   }
-  // Host / projector: close the Fast-Round bet window early
-  socket.on('host:skipBet', ({code}) => { const r=rooms[code]; if(!r||r.status!=='revealing'||!r.betEnd) return; beginQ(code,r.curIdx); });
-  // Player: place / cancel the Fast-Round Bet (only while the number is shown and the question is still hidden)
-  socket.on('player:bet', ({code,name,on}) => {
-    seen(code,name);
-    const r=rooms[code]; if(!r||r.status!=='revealing'||!r.betEnd||!isFastQ(r,r.curIdx)) return;
-    if (Date.now()>r.betEnd+400) return;
-    const p=r.players[name]; if(!p) return;
-    if(!p.bets) p.bets={}; if(on) p.bets[r.curIdx]=true; else delete p.bets[r.curIdx];
-    touch(socket,code,name);
-  });
   // Host's own wheel tells us exactly when its CSS animation visually finished — no guessing, no drift.
   socket.on('host:spinComplete', ({code, idx}) => { advanceToRevealing(code, idx); });
 

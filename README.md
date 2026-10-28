@@ -3,6 +3,8 @@
 - Wheel ni jagya e 3×3 Card Grid: darek Phase (9 question) ni potani image; darek question no card flip thai ne grid ma set thay, pachhi random number nikle
 - Lobby ma 🖼 Images: Phase 1-4 image ane 🧩 Mystery (4x4) image host upload kari shake (na kare to default)
 - Phase 1 = question 1-9, Phase 2 = 10-18, Phase 3 = 19-27, Phase 4 = 28-36 (question list ni order). Draw e Phase na j 9 ma thi thay: card N flip thai ne grid ma N-mi jagya e fit thay, pachhi e Phase no N-mo question aave. Player na Card ma Phase1-3 na 6 ane Phase4 na 7 javab
+- Fast Round ni 💰 Bet kadhi nakhi (Fast Round ma fakt speed points)
+- Grid: avela number na card image ma fit thai ne number chhupai jay, junu card faded rahe, navu bright; Phase puro thay tyare poori image bright
 - Mystery Image: darek Phase na koi pan 4 sacha javab = 4 tukda (Fast Round pan ganay)
 - Tukda Phase puro thay tyare blurred grid ma set thay; image last ma j khule; 16 tukda complete = auto claim, winner reveal ma time pan dekhay
 - Winner 11: 5 Line, Full House, Top 3 Score, Zone Average, 🧩 Image Winner

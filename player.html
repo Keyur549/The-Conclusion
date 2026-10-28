@@ -638,7 +638,7 @@ tr.g td:nth-child(3){color:#15803d;font-weight:600}tr.b td:nth-child(3){color:#b
 <div class="st"><div><b style="color:${res.netScore<0?'#dc2626':'#0f766e'}">${res.netScore}</b><span>🎯 Net Score</span></div><div><b style="color:#15803d">${res.correctCount}</b><span>✅ સાચા</span></div><div><b style="color:#dc2626">${res.wrongCount}</b><span>❌ ખોટા</span></div><div><b style="color:#b45309">${res.fastCount}</b><span>⚡ Fast</span></div><div><b style="color:#7c3aed">${res.streakBonus}</b><span>🏆 Streak</span></div><div><b style="color:#b45309">${res.correctRows}</b><span>📏 Line</span></div></div>
 <h3 style="color:#0f766e;margin:18px 0 6px">🎴 મારું 5×5 Card</h3><div class="grid">${cells5}</div>
 <table><tr><th>#</th><th>Question</th><th>તમારો જવાબ</th><th>સાચો જવાબ</th><th></th><th>⚡/Card</th></tr>${rows}</table>
-<div class="ft" style="margin-top:8px">⚡ Speed Round Bonus: +${res.speedPts||0} · 💰 Bet: ${res.betPts>0?'+':''}${res.betPts||0}</div>
+<div class="ft" style="margin-top:8px">⚡ Speed Round Bonus: +${res.speedPts||0}</div>
 <div class="ft" style="margin-top:8px">⚡ Fast Bonus: ${res.fastCount} (+${res.fastCount}) · 🏆 Streak: ${p.cards&&p.cards.streak!=null?(res.streakOk?'સફળ +'+res.streakBonus:'સફળ ન થઈ'):'વાપરી નથી'} · 🛡 બચાવ: ${res.shieldSaved}</div>
 <div class="ft">Net Score = સાચા − ખોટા + ⚡ Fast + 🏆 Streak · Room ${esc(r.code)}</div><button class="pr" onclick="window.print()">🖨 Print / PDF</button></div></body></html>`;
   const b=new Blob([html],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='my-report.html'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);

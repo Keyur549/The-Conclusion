@@ -187,7 +187,7 @@ body.bkdraw #pj .pjbar,body.wvhide #pj .pjbar{display:none!important}
 .pgc .pgi{position:absolute;inset:0;border-radius:inherit;background-image:var(--im),linear-gradient(135deg,#7c3aed,#f59e0b);background-size:300% 300%,100% 100%;background-repeat:no-repeat}
 .pgc .pgn{position:absolute;right:5%;bottom:4%;min-width:34%;padding:1% 6%;border-radius:99px;background:rgba(20,8,44,.78);color:#ffe9a8;font-size:clamp(.7rem,2.6vw,1.1rem);font-weight:900;text-align:center;box-shadow:0 0 0 1.5px rgba(255,217,120,.6)}
 #pj .pgc .pgn{font-size:clamp(.9rem,3vh,1.9rem)}
-.pgc.on{animation:pgsettle .6s both}
+.pgc.on{transition:opacity .9s,filter .9s}.pgc.on.fresh{animation:pgsettle .6s both}.pgc.on.old{opacity:.45;filter:saturate(.45) brightness(.8)}.pgx.full .pgc.on{opacity:1;filter:none}.pgbn{font-family:Georgia,serif;font-weight:900;color:#ffd978;opacity:.8;font-size:clamp(1.3rem,6vw,2.4rem);text-shadow:0 0 12px rgba(255,200,80,.6)}#pj .pgbn{font-size:clamp(1.6rem,7vh,3.6rem)}
 .pgback{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 40%,#4b2a96,#1c0f47 70%);box-shadow:inset 0 0 0 2px rgba(255,217,120,.55),inset 0 0 0 5px rgba(20,8,44,.9),inset 0 0 0 6.5px rgba(255,217,120,.25);display:flex;align-items:center;justify-content:center;color:#ffd978;font-size:clamp(1.2rem,6vw,2.2rem);text-shadow:0 0 12px rgba(255,200,80,.8)}
 #pj .pgback{font-size:clamp(1.6rem,7vh,3.4rem)}
 .pgc.em .pgback{opacity:.55}
@@ -1759,14 +1759,14 @@ function pgInfo(r){
   const k=Math.min(Math.floor((n-1)/PHASE_LEN),pgPools(r).length-1), P=pgPools(r)[k]||[];
   let drawn=used.slice(k*PHASE_LEN,k*PHASE_LEN+PHASE_LEN).map(q=>P.indexOf(q)).filter(j=>j>=0), cur=-1;
   if(r.status==='spinning'){ cur=P.indexOf(r.curIdx); if(!(GA.idx===r.curIdx&&GA.landed)) drawn=drawn.filter(j=>j!==cur); }
-  return {k,drawn,cur};
+  return {k,drawn,cur,last:drawn.length?drawn[drawn.length-1]:-1};
 }
 function pgPos(j){ return (j%3)*50+'% '+Math.floor(j/3)*50+'%'; }
 function drawStage(r){
   const I=pgInfo(r); let cells='';
   for(let j=0;j<PHASE_LEN;j++){
-    if(I.drawn.indexOf(j)>=0) cells+=`<div class="pgc on" data-j="${j}"><i class="pgi" style="background-position:${pgPos(j)},0 0"></i><b class="pgn">${j+1}</b></div>`;
-    else cells+=`<div class="pgc em${j===I.cur?' tgt':''}" data-j="${j}"><div class="pgback">✦</div></div>`;
+    if(I.drawn.indexOf(j)>=0) cells+=`<div class="pgc on${j===I.last?(GA.landed&&GA.idx===r.curIdx?' fresh':' newest'):' old'}" data-j="${j}"><i class="pgi" style="background-position:${pgPos(j)},0 0"></i></div>`;
+    else cells+=`<div class="pgc em${j===I.cur?' tgt':''}" data-j="${j}"><div class="pgback"><span class="pgbn">${j+1}</span></div></div>`;
   }
   return `<div class="pgwrap"><div class="pgph">🃏 PHASE ${I.k+1} · ${I.drawn.length}/${PHASE_LEN}</div><div class="pgx${I.drawn.length>=PHASE_LEN?' full':''}" style="--im:url('${pgImgUrl(r,I.k)}')">${cells}</div></div>`;
 }
@@ -1781,7 +1781,7 @@ function gridDraw(r){
     const cell=x.querySelector('.pgc[data-j="'+j+'"]'); if(!cell) return null;
     const S=Math.round(x.clientWidth*0.5), f=document.createElement('div'); f.className='pgfly';
     f.style.cssText='width:'+S+'px;height:'+S+'px;left:'+((x.clientWidth-S)/2)+'px;top:'+((x.clientHeight-S)/2)+'px;font-size:'+Math.round(S*0.5)+'px';
-    f.innerHTML='<div class="pgin"><div class="pgf pgfk"><b class="pgroll">?</b></div><div class="pgf pgfr"><i class="pgi" style="background-position:'+pgPos(j)+',0 0"></i><b class="pgn" style="font-size:'+Math.round(S*0.16)+'px">'+num+'</b></div></div>';
+    f.innerHTML='<div class="pgin"><div class="pgf pgfk"><b class="pgroll">?</b></div><div class="pgf pgfr"><i class="pgi" style="background-position:'+pgPos(j)+',0 0"></i></div></div>';
     x.appendChild(f); return {x,cell,f,S};
   }).filter(Boolean);
   const each=fn=>flies.forEach(fn);
@@ -2182,7 +2182,7 @@ async function downloadExcel(){
   ws.columns=[
     {header:'Rank',key:'rank',width:7},{header:'Player',key:'name',width:20},{header:'Zone',key:'zone',width:16},
     {header:'Avatar',key:'avatar',width:8},{header:'Correct',key:'correct',width:10},{header:'Wrong',key:'wrong',width:10},
-    {header:'Net Score',key:'netScore',width:11},{header:'⚡ Fast',key:'fast',width:8},{header:'🏆 Streak',key:'streak',width:12},{header:'💰 Bet ±',key:'betPts',width:9},{header:'⚡ Speed',key:'speedPts',width:9},{header:'🛡 Shield',key:'shield',width:11},
+    {header:'Net Score',key:'netScore',width:11},{header:'⚡ Fast',key:'fast',width:8},{header:'🏆 Streak',key:'streak',width:12},{header:'⚡ Speed',key:'speedPts',width:9},{header:'🛡 Shield',key:'shield',width:11},
     {header:'Valid Lines',key:'validLines',width:12},{header:'Invalid Lines',key:'invalidLines',width:13},
     {header:'Full House',key:'fullHouse',width:12},
     {header:'Line Winner',key:'lineWinner',width:22},
@@ -2469,9 +2469,9 @@ function render(){
     <button class="btn secondary" onclick="downloadExcel()">⬇ Excel Report (.xlsx)</button></div>`;
     body+=zoneTableHTML(r,n=>playerResults(r,n));
     body+=`<div class="card overflow"><h2>Player Results</h2><div class="muted">Net Score = Correct − Wrong (negative marking)</div><table class="stbl">
-    <tr><th align="left">Player</th><th>Correct</th><th>Wrong</th><th>⚡</th><th>🏆</th><th>💰Bet</th><th>⚡Speed</th><th>Net</th><th>Lines</th><th>Full</th></tr>
+    <tr><th align="left">Player</th><th>Correct</th><th>Wrong</th><th>⚡</th><th>🏆</th><th>⚡Speed</th><th>Net</th><th>Lines</th><th>Full</th></tr>
     ${Object.keys(r.players).map(n=>({n,res:playerResults(r,n)})).sort((a,b)=>b.res.netScore-a.res.netScore).map(({n,res})=>{
-    return `<tr><td>${esc(n)}</td><td align="center">${res.correctCount}</td><td align="center">${res.wrongCount}</td><td align="center">${res.fastCount}</td><td align="center">${res.streakBonus?'🏆':'—'}</td><td align="center">${res.betPts||0}</td><td align="center">${res.speedPts||0}</td><td align="center" style="color:${res.netScore<0?'#dc2626':'#16a34a'};font-weight:700">${res.netScore}</td><td align="center">${res.correctRows}</td><td align="center">${res.fullHouse?'✔':'—'}</td></tr>`;}).join('')}
+    return `<tr><td>${esc(n)}</td><td align="center">${res.correctCount}</td><td align="center">${res.wrongCount}</td><td align="center">${res.fastCount}</td><td align="center">${res.streakBonus?'🏆':'—'}</td><td align="center">${res.speedPts||0}</td><td align="center" style="color:${res.netScore<0?'#dc2626':'#16a34a'};font-weight:700">${res.netScore}</td><td align="center">${res.correctRows}</td><td align="center">${res.fullHouse?'✔':'—'}</td></tr>`;}).join('')}
     </table></div>`;
   }
   el.innerHTML=body;
