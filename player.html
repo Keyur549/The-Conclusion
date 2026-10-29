@@ -1043,7 +1043,7 @@ function render(){
   const r=state.room, p=r.players[state.name];
   if(!p){ el.innerHTML='<div class="card">Card તૈયાર થઈ રહ્યું છે… (થોડી સેકન્ડ, આપોઆપ ફરી જોડાઈ રહ્યા છીએ)</div>'; autoRejoin(); return; }
   let body=profileHdr(r,p)+zoneBattleHTML(r,p)+(typeof certBtn==='function'?certBtn(r):'');
-  if(r.status==='lobby'||r.status==='active') body+=`<div class="card">Host ની રાહ જુઓ…<div style="margin-top:8px"><button class="btn ghost" onclick="pracOpen()">🧪 Practice કરો (3 નકલી પ્રશ્ન)</button></div></div>`;
+  if(r.status==='lobby'||r.status==='active') body+=`<div class="card">Host ની રાહ જુઓ…<div style="margin-top:8px"><button class="btn ghost" onclick="pracOpen()">🧪 Practice કરો (5 નકલી પ્રશ્ન)</button></div></div>`;
   if(r.status==='spinning') body+=`<div class="card"><div class="qtext">🃏 Host Card Draw કરી રહ્યા છે...</div></div>`;
   if(r.status==='revealing'){ const ph=phaseInfo(r);
     if(ph.fast&&r.betEnd){ const left=Math.max(0,Math.ceil((r.betEnd-Date.now())/1000)), on=!!(p.bets&&p.bets[r.curIdx])||state.betQ===r.curIdx&&state.betOn;
@@ -1063,7 +1063,7 @@ function render(){
   if(r.status==='locked') body+=phaseDone(r)?`<div class="card" style="text-align:center;font-weight:800">🏁 PHASE ${phaseInfo(r).ph} પૂરો!<div class="muted">હવે PHASE ${Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1} ની રાહ જુઓ — Host શરૂ કરશે.</div></div>`:`<div class="card muted">⏱ સમય પૂરો — next question ની રાહ જુઓ.</div>`;
   if(['locked','active','spinning','revealing','ended'].includes(r.status)) body+=surpDrawHTML(r,p);
   if(r.status==='ended') body+=`<div class="card muted">Game પૂરી — results ની રાહ જુઓ.</div>`;
-  if(['question','locked','spinning','revealing','active','ended'].includes(r.status)) body+=surpChipHTML(r,p)+puzBoxHTML(r);
+  if(['question','locked','spinning','revealing','active','ended'].includes(r.status)) body+=surpChipHTML(r,p);
 
   let cellState=Array(25).fill(null);
   if(r.status==='revealed'){ cellState=playerResults(state.name).cellState; }
@@ -1094,6 +1094,7 @@ function render(){
       body+=`<button class="btn ${c?'ghost':'secondary'}" ${(!enabled||locked)?'disabled':''} onclick="playerClaim('${key}')">${c?'✔ ':''}${label}${c?`<br><small>🕒 ${fmtTime(c.ts)} · ${fmtDur(c.ts-(r.startedAt||r.createdAt))}</small>`:''}</button>`;
     }
     body+=`</div></div>`;
+    if(['question','locked','spinning','revealing','active','ended'].includes(r.status)) body+=puzBoxHTML(r);
   } else {
     const labels={line1:'1 Line',line2:'2 Line',line3:'3 Line',line4:'4 Line',line5:'5 Line',full:'Full House'};
     const res=playerResults(state.name); const step=r.revealStep||0;

@@ -307,6 +307,10 @@ body.bkdraw #pj .pgph{opacity:.9}
 .pgfly .pgfr:before{content:'';position:absolute;left:0;right:0;top:0;height:48%;background:linear-gradient(rgba(255,255,255,.4),rgba(255,255,255,.04))}
 #unv .ug{box-shadow:0 0 0 .6vh #fff,0 0 7vh rgba(255,255,255,0) !important}
 #unv.glow .ug{box-shadow:0 0 0 .6vh #fff,0 0 7vh rgba(255,255,255,.7) !important}
+
+/* v6: card back stays "?"; number exists only on the face revealed by the flip */
+.pgfly .pgfk{background:linear-gradient(145deg,#3d5bff,#8a3dff) !important}
+.pgfly .pgq{position:relative;font-family:Inter,system-ui,sans-serif;font-weight:900;color:#fff;text-shadow:0 5px 0 rgba(0,0,0,.28),0 0 26px rgba(255,255,255,.7);font-size:inherit;line-height:1}
 </style>
 </head>
 <body>
@@ -1857,16 +1861,16 @@ function gridDraw(r){
     const cell=x.querySelector('.pgc[data-j="'+j+'"]'); if(!cell) return null;
     const S=Math.round(x.clientWidth*0.5), f=document.createElement('div'); f.className='pgfly';
     f.style.cssText='width:'+S+'px;height:'+S+'px;left:'+((x.clientWidth-S)/2)+'px;top:'+((x.clientHeight-S)/2)+'px;font-size:'+Math.round(S*0.5)+'px;--sx:'+Math.round(x.clientWidth*0.95)+'px;--sy:'+Math.round(-x.clientHeight*1.05)+'px';
-    f.innerHTML='<div class="pgin"><div class="pgf pgfk"><b class="pgroll">?</b></div><div class="pgf pgfr"><b class="pgroll">'+num+'</b></div></div>';
+    f.innerHTML='<div class="pgin"><div class="pgf pgfk"><b class="pgq">?</b></div><div class="pgf pgfr"><b class="pgroll">'+(1+Math.floor(Math.random()*total))+'</b></div></div>';
     x.appendChild(f); return {x,cell,f,S};
   }).filter(Boolean);
   const each=fn=>flies.forEach(fn);
   playSpinTicks(2600);
   requestAnimationFrame(()=>{ each(o=>o.f.classList.add('come'));          // card whirls in fast from the top-right corner to the middle
     at(1150,()=>{ each(o=>o.f.classList.add('stop')); try{ playTick(); }catch(e){} });
-    at(1750,()=>{ roll=setInterval(()=>{ const t=1+Math.floor(Math.random()*total); each(o=>{ const c=PGCOL[(t-1)%9]; o.f.style.setProperty('--c1',c[0]); o.f.style.setProperty('--c2',c[1]); o.f.querySelector('.pgroll').textContent=t; }); },75); });
-    at(3400,()=>{ clearInterval(roll); each(o=>{ const c=PGCOL[j%9]; o.f.style.setProperty('--c1',c[0]); o.f.style.setProperty('--c2',c[1]); o.f.querySelectorAll('.pgroll').forEach(e=>e.textContent=num); o.f.style.setProperty('--c1',c[0]); o.f.classList.add('hit'); }); try{ playFanfare(); }catch(e){} });
-    at(4300,()=>{ each(o=>o.f.classList.add('flip')); try{ playTick(); }catch(e){} });
+    at(1750,()=>{ each(o=>o.f.classList.add('flip')); try{ playTick(); }catch(e){} roll=setInterval(()=>{ const t=1+Math.floor(Math.random()*total); each(o=>{ const c=PGCOL[(t-1)%9]; o.f.style.setProperty('--c1',c[0]); o.f.style.setProperty('--c2',c[1]); o.f.querySelector('.pgfr .pgroll').textContent=t; }); },75); });
+    at(3400,()=>{ clearInterval(roll); each(o=>{ const c=PGCOL[j%9]; o.f.style.setProperty('--c1',c[0]); o.f.style.setProperty('--c2',c[1]); o.f.querySelector('.pgfr .pgroll').textContent=num; o.f.style.setProperty('--c1',c[0]); o.f.classList.add('hit'); }); try{ playFanfare(); }catch(e){} });
+    
     at(5100,()=>{ each(o=>{ const xr=o.x.getBoundingClientRect(), cr=o.cell.getBoundingClientRect();
         const dx=(cr.left+cr.width/2)-(xr.left+xr.width/2), dy=(cr.top+cr.height/2)-(xr.top+xr.height/2), sc=cr.width/o.S;
         o.f.classList.add('go'); o.f.style.transform='translate('+dx+'px,'+dy+'px) scale('+sc+')'; }); });
