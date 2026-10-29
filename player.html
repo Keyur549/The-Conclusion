@@ -147,6 +147,35 @@ input:focus,select:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 3p
 .pzlive .pzt.bl{position:relative;overflow:hidden;background:#3d5bff}.pzlive .pzt.bl u{position:absolute;inset:-8px;background-size:400% 400%;background-repeat:no-repeat;filter:blur(7px) brightness(.9)}
 .pzt.pop{animation:pzpop .8s cubic-bezier(.2,1.4,.3,1) both}@keyframes pzpop{0%{transform:scale(.2) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
 .pzchips{display:flex;gap:6px;justify-content:center;margin-top:8px}.pzchip{padding:2px 10px;border-radius:99px;background:#eee;font-size:.78rem;font-weight:700;color:#64748b}.pzchip.ok{background:#dcfce7;color:#15803d}.pzchip.now{background:#fef3c7;color:#b45309}
+/* ---- 🎰 Surprise cards + 🗝 keys + 🔐 vault ---- */
+.sp3{display:flex;gap:10px;justify-content:center;perspective:800px;margin:12px 0 4px}
+.spc{position:relative;width:min(27vw,104px);aspect-ratio:.72;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.3,.7,.2,1),opacity .5s;cursor:pointer;border:0;background:none;padding:0}
+.spc .f{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:6px}
+.spc .bk{background:linear-gradient(145deg,var(--c1),var(--c2));box-shadow:inset 0 0 0 3px rgba(255,255,255,.92),0 6px 14px rgba(0,0,0,.25);font-size:1.9rem;color:#fff;overflow:hidden;animation:spbob 2.4s ease-in-out infinite}
+.spc:nth-child(2) .bk{animation-delay:.3s}.spc:nth-child(3) .bk{animation-delay:.6s}
+@keyframes spbob{50%{transform:translateY(-5px)}}
+.spc .bk:before{content:'';position:absolute;left:0;right:0;top:0;height:48%;background:linear-gradient(rgba(255,255,255,.4),rgba(255,255,255,.05))}
+.spc .fr{transform:rotateY(180deg);background:linear-gradient(160deg,#fffdf7,#f1e8d4);color:#2a1470;box-shadow:inset 0 0 0 4px #e6b422,0 0 30px rgba(255,210,90,.8)}
+.spc .fr .em{font-size:2.2rem;font-weight:900}.spc .fr b{font-size:.78rem;line-height:1.25}
+.spc.flip{transform:rotateY(180deg) scale(1.18);z-index:3}.spc.gone{opacity:.25}.spc.lock{pointer-events:none}
+.spchip{display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:14px;background:linear-gradient(90deg,#7c3aed,#d63dbb);color:#fff;font-weight:800;font-size:.9rem;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+.spchip small{display:block;font-weight:600;opacity:.92;font-size:.76rem}
+.pzchip.key{background:#fef3c7;color:#92400e}
+.vt{position:relative;margin:6px auto 0;width:min(100%,300px)}
+.vt .vd{position:relative;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8f9aa8,#3b4452 62%,#1b212b);box-shadow:inset 0 0 0 8px #596372,inset 0 0 0 11px #242a34,0 10px 26px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+.vt .vls{position:absolute;top:14%;left:9%;right:9%;display:flex;justify-content:space-between}
+.vt .vk{position:relative;width:21%;aspect-ratio:.82;display:flex;flex-direction:column;align-items:center}
+.vt .vs{width:62%;height:46%;border:6px solid #cfd5dd;border-bottom:none;border-radius:40px 40px 0 0;transform-origin:100% 100%}
+.vt .vb{flex:1;width:100%;border-radius:8px;background:linear-gradient(160deg,#ffe98a,#c18a0c 60%,#7a5200);display:flex;align-items:center;justify-content:center;font-weight:900;color:#3a2300;font-size:.78rem;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+.vt .vk.ok .vs{transform:rotateY(180deg) translateY(-18%)}.vt .vk.ok .vb{background:linear-gradient(160deg,#b6ffcf,#22c55e 60%,#0e7a3a);color:#05361a}
+.vt .vk.no .vb{background:linear-gradient(160deg,#ffb4b4,#dc2626 60%,#7a0f0f);color:#fff}
+.vt.play .vk.ok .vs{animation:vopen .6s calc(var(--i)*.8s + .5s) cubic-bezier(.3,1.6,.4,1) backwards}
+.vt.play .vk.ok .vb{animation:vgreen .3s calc(var(--i)*.8s + .7s) backwards}
+.vt.play .vk.no{animation:vshk .5s calc(var(--i)*.8s + .6s) backwards}
+@keyframes vopen{from{transform:none}}@keyframes vgreen{from{background:linear-gradient(160deg,#ffe98a,#c18a0c 60%,#7a5200);color:#3a2300}}@keyframes vshk{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.vt .vp{position:absolute;inset:36% 20% 12%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;font-size:.78rem}
+.vt .vp b{font-size:2.3rem;color:#ffe98a;text-shadow:0 0 18px rgba(255,200,60,.9);line-height:1}
+.vt.play .vp{animation:vpop .8s 4.4s cubic-bezier(.2,1.4,.3,1) backwards}@keyframes vpop{from{opacity:0;transform:scale(.3)}}
 .pzfin{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:min(100%,260px);aspect-ratio:1;margin:10px auto 0}
 .pzt{background-size:400% 400%;border-radius:4px;display:flex;align-items:center;justify-content:center;font-style:normal}.pzt.lk{background:linear-gradient(145deg,#3d5bff,#8a3dff);box-shadow:inset 0 0 0 2px rgba(255,255,255,.85);color:#fff;font-weight:900}
 </style>
@@ -385,6 +414,37 @@ function phaseInfo(r){ const i=r.curIdx!=null?qPos(r,r.curIdx):-1, n=(r.usedIdx|
   const ph=i>=0?Math.floor(i/PHASE_LEN)+1:Math.floor(n/PHASE_LEN)+1; return {ph:Math.min(ph,tot),tot,fast:i>=0&&isFastQ(r,r.curIdx),k:i>=0?(i%PHASE_LEN)+1:0}; }
 
 /* 🧩 Mystery Image (4x4): each phase = 4 pieces. Shown BLURRED all game, revealed at the end. */
+
+// ---------- 🎰 Phase Surprise (personal; applies to ALL 9 questions of the NEXT phase) ----------
+const SURP_L={x2:['✖2','×2 Points','આ Phase ના દરેક સાચા જવાબના 2 points'],safe:['🛡','No Minus','આ Phase માં ખોટા જવાબનું −1 નહિ'],fast:['⚡','Fast +3','આ Phase ના જે પ્રશ્નમાં તમે સૌથી પહેલા સાચો જવાબ આપો તેના +3']};
+const SURP_COL=[['#ff3b6b','#ff8a3d'],['#22d36b','#00b8a9'],['#3d5bff','#8a3dff']];
+function surpLatest(p){ const d=((p.pz||{}).done)||[]; let k=0; for(let i=0;i<3;i++) if(d[i]) k=i+1; return k; }
+function surpCur(r){ const n=(r.usedIdx||[]).length; if(n<=0) return -1; return (r.status==='locked'&&n%PHASE_LEN===0)?n/PHASE_LEN:Math.floor((n-1)/PHASE_LEN); }
+function surpDrawHTML(r,p){
+  const k=surpLatest(p); if(k<1) return '';
+  const opened=!!(p.surpOpen&&p.surpOpen[k]), an=state.surpAnim;
+  if(opened&&!(an&&an.k===k)) return '';
+  const typ=(an&&an.k===k&&an.t)||null; let cards='';
+  for(let i=0;i<3;i++){ const L=typ?SURP_L[typ]:null, mine=an&&an.k===k&&an.i===i;
+    cards+='<button class="spc'+(mine&&typ?' flip':'')+(an&&an.k===k&&!mine?' gone':'')+(an&&an.k===k?' lock':'')+'" onclick="surpTap('+k+','+i+')" style="--c1:'+SURP_COL[i][0]+';--c2:'+SURP_COL[i][1]+'"><div class="f bk">🎁</div><div class="f fr">'+(mine&&L?'<div class="em">'+L[0]+'</div><b>'+L[1]+'</b>':'')+'</div></button>'; }
+  return '<div class="card" style="text-align:center;border:2px solid #d63dbb"><div style="font-weight:900;font-size:1.05rem">🎰 PHASE '+k+' પૂરો — તમારું Surprise!</div><div class="muted">એક card પસંદ કરો. જે મળે તે PHASE '+(k+1)+' ના બધા 9 પ્રશ્ન પર લાગુ પડશે.</div><div class="sp3">'+cards+'</div>'+(typ?'<div style="font-weight:800;margin-top:6px">'+SURP_L[typ][0]+' '+SURP_L[typ][1]+'<div class="muted" style="font-weight:600">'+SURP_L[typ][2]+'</div></div>':'')+'</div>';
+}
+function surpTap(k,i){
+  if(state.surpAnim) return; state.surpAnim={k,i,t:null}; render();
+  socket.emit('player:surprise',{code:state.code,name:state.name,k},res=>{
+    if(!res||!res.ok){ state.surpAnim=null; render(); if(res&&res.error) alert(res.error); return; }
+    state.surpAnim={k,i,t:res.type}; render(); setTimeout(()=>{ state.surpAnim=null; render(); },4500); });
+}
+function surpChipHTML(r,p){
+  const cp=surpCur(r); if(cp<1||cp>3) return ''; const t=(p.surp||{})[cp]; if(!t||!(p.surpOpen&&p.surpOpen[cp])) return '';
+  const L=SURP_L[t]; return '<div class="spchip"><span style="font-size:1.7rem">'+L[0]+'</span><span>'+L[1]+' <small>'+L[2]+'</small></span></div>';
+}
+function vaultHTML(r,p,res){
+  const keys=res.keys||[false,false,false,false]; let h='';
+  for(let i=0;i<4;i++) h+='<div class="vk '+(keys[i]?'ok':'no')+'" style="--i:'+i+'"><div class="vs"></div><div class="vb">P'+(i+1)+'</div></div>';
+  const play=!state.vaultPlayed; if(play) setTimeout(()=>{ state.vaultPlayed=true; },6500);
+  return '<div class="card" style="text-align:center"><div style="font-weight:900">🔐 Final Vault — '+res.nKeys+'/4 🗝</div><div class="vt'+(play?' play':'')+'"><div class="vd"><div class="vls">'+h+'</div><div class="vp"><span>Vault Points</span><b>+'+(res.vaultPts||0)+'</b></div></div></div><div class="muted" style="margin-top:6px">દરેક Phase ના 6 સાચા જવાબ = 1 🗝 · 1🗝 +2 · 2🗝 +5 · 3🗝 +10 · 4🗝 +20</div></div>';
+}
 const PUZ_PH=4;
 function puzImg(r){ return '/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0); }
 function puzCoreC(r,p){
@@ -407,8 +467,8 @@ function puzBoxHTML(r){
   const popFrom=PZSEEN; let cells=''; const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
   for(let t=0;t<16;t++){ const k=Math.floor(perm.indexOf(t)/4); cells+=have[t]?puzBlTile(t,im,k>=popFrom):'<i class="pzt lk">?</i>'; }
   setTimeout(()=>{ PZSEEN=nd; },900);
-  const chips=[0,1,2,3].map(k=>'<span class="pzchip'+(pz.done[k]?' ok':(k+1===ph?' now':''))+'">P'+(k+1)+' '+(pz.done[k]?pz.cnt[k]+'/4':(k+1===ph?'⏳':'·'))+'</span>').join('');
-  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image <span class="muted">· Phase '+ph+'/4</span></div><div class="pzfin pzlive">'+cells+'</div><div class="pzchips">'+chips+'</div><div class="muted" style="text-align:center;margin-top:6px">તમારા Card માં દરેક Phase ના 6 જવાબ છે (Phase 4 ના 7). દરેક Phase ના કોઈ પણ 4 સાચા = 4 ટુકડા. Phase પૂરો થાય ત્યારે ટુકડા ગોઠવાશે — ચિત્ર છેલ્લે ખુલશે! 🤫</div></div>';
+  const chips=[0,1,2,3].map(k=>'<span class="pzchip'+(pz.done[k]?' ok':(k+1===ph?' now':''))+'">P'+(k+1)+' '+(pz.done[k]?pz.cnt[k]+'/4':(k+1===ph?'⏳':'·'))+(pz.done[k]?((pz.keys||[])[k]?' 🗝':' ✖'):'')+'</span>').join('');
+  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image <span class="muted">· Phase '+ph+'/4</span></div><div class="pzfin pzlive">'+cells+'</div><div class="pzchips">'+chips+'</div><div class="muted" style="text-align:center;margin-top:6px">તમારા Card માં દરેક Phase ના 6 જવાબ છે (Phase 4 ના 7). કોઈ પણ 4 સાચા = 4 ટુકડા · 6 સાચા = 🗝 ચાવી. Phase પૂરો થાય ત્યારે ટુકડા ગોઠવાશે — ચિત્ર છેલ્લે ખુલશે! 🤫</div></div>';
 }
 function puzFinalHTML(r,p){
   const z=puzzleOf(r,p), s={}, im=puzImg(r); z.got.forEach(t=>s[t]=1);
@@ -434,6 +494,19 @@ function fastMapC(r){
     if(fast){ list.sort((x,y)=>x.ts-y.ts||x.j-y.j); speed[qi]=list.slice(0,SPEED_PTS.length).map(x=>x.n); } else if(best) fm[qi]=best.n; });
   fm.__speed=speed; r._fm=fm; return fm;
 }
+const VAULT_PTS=[0,2,5,10,20], KEY_NEED=6;
+function surpVault(room,p,pname,cellState,fm,shieldSaved){
+  const cor=[0,0,0,0], red=[0,0,0,0];
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const pos=qPos(room,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k>3) return; const st=cellState[+ci]; if(st==='green') cor[k]++; else if(st==='red') red[k]++; });
+  const keys=cor.map(c=>c>=KEY_NEED), nKeys=keys.filter(Boolean).length;
+  let surpPts=0; const surpRes=[];
+  for(let k=1;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
+    if(t==='x2') pts=cor[k];
+    else if(t==='safe'){ pts=red[k]; const sq=(p.cards||{}).shield; if(shieldSaved && sq!=null && Math.floor(qPos(room,sq)/PHASE_LEN)===k) pts-=1; }
+    else if(t==='fast') (room.usedIdx||[]).forEach((qi,pos)=>{ if(Math.floor(pos/PHASE_LEN)===k && fm && fm[qi]===pname) pts+=3; });
+    surpRes.push({k,t,pts}); surpPts+=pts; }
+  return {keys,nKeys,vaultPts:VAULT_PTS[nKeys]||0,surpPts,surpRes,phaseCor:cor};
+}
 function scoreExtra(r,pname,cellState,correctCount,wrongCount){
   const p=r.players[pname], fm=fastMapC(r), cards=p.cards||{};
   const sc=cards.shield!=null?markCell(p,cards.shield):undefined;
@@ -442,9 +515,9 @@ function scoreExtra(r,pname,cellState,correctCount,wrongCount){
   const slots=streakSlotsFull(r,p);
   const streakRes=slots.map(qi=>{ const ci=markCell(p,qi); return ci===undefined?'miss':(cellState[ci]==='green'?'ok':'bad'); });
   const streakOk=slots.length===STREAK_LEN&&streakRes.every(x=>x==='ok');
-  const bs=betSpeed(r,p,pname,cellState,fm);
-  return {shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,
-    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts};
+  const bs=betSpeed(r,p,pname,cellState,fm), sv=surpVault(r,p,pname,cellState,fm,shieldSaved);
+  return {surpPts:sv.surpPts,surpRes:sv.surpRes,keys:sv.keys,nKeys:sv.nKeys,vaultPts:sv.vaultPts,phaseCor:sv.phaseCor,shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,
+    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts+sv.surpPts+sv.vaultPts};
 }
 function cardTags(r,p,res,qi){
   const c=p.cards||{}, t=[];
@@ -639,6 +712,7 @@ tr.g td:nth-child(3){color:#15803d;font-weight:600}tr.b td:nth-child(3){color:#b
 <h3 style="color:#0f766e;margin:18px 0 6px">🎴 મારું 5×5 Card</h3><div class="grid">${cells5}</div>
 <table><tr><th>#</th><th>Question</th><th>તમારો જવાબ</th><th>સાચો જવાબ</th><th></th><th>⚡/Card</th></tr>${rows}</table>
 <div class="ft" style="margin-top:8px">⚡ Speed Round Bonus: +${res.speedPts||0}</div>
+<div class="ft">🎰 Surprise: ${(res.surpPts||0)>0?'+':''}${res.surpPts||0} · 🔐 Vault (${res.nKeys||0}🗝): +${res.vaultPts||0}</div>
 <div class="ft" style="margin-top:8px">⚡ Fast Bonus: ${res.fastCount} (+${res.fastCount}) · 🏆 Streak: ${p.cards&&p.cards.streak!=null?(res.streakOk?'સફળ +'+res.streakBonus:'સફળ ન થઈ'):'વાપરી નથી'} · 🛡 બચાવ: ${res.shieldSaved}</div>
 <div class="ft">Net Score = સાચા − ખોટા + ⚡ Fast + 🏆 Streak · Room ${esc(r.code)}</div><button class="pr" onclick="window.print()">🖨 Print / PDF</button></div></body></html>`;
   const b=new Blob([html],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='my-report.html'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
@@ -662,7 +736,7 @@ const SC_DEF={
  "_help": "આ file Notepad/GitHub માં edit કરો. min = ઓછામાં ઓછો Net Score. દરેક level માં texts અને spiritual માંથી એક line player પ્રમાણે આવે છે. {n} = સંખ્યા.",
  "levels": [
   {
-   "min": 25,
+   "min": 70,
    "emoji": "👑",
    "tier": "જ્ઞાન સમ્રાટ",
    "head": "તમે જ્ઞાનના શિખરે છો!",
@@ -677,7 +751,7 @@ const SC_DEF={
    ]
   },
   {
-   "min": 20,
+   "min": 50,
    "emoji": "🌟",
    "tier": "જ્ઞાન ચેમ્પિયન",
    "head": "અસાધારણ પ્રદર્શન!",
@@ -691,7 +765,7 @@ const SC_DEF={
    ]
   },
   {
-   "min": 15,
+   "min": 35,
    "emoji": "⭐",
    "tier": "તેજસ્વી તારલો",
    "head": "ખૂબ જ સરસ રમ્યા!",
@@ -705,7 +779,7 @@ const SC_DEF={
    ]
   },
   {
-   "min": 10,
+   "min": 22,
    "emoji": "🚀",
    "tier": "ઉગતો સિતારો",
    "head": "તમે સાચા માર્ગ પર છો!",
@@ -719,7 +793,7 @@ const SC_DEF={
    ]
   },
   {
-   "min": 1,
+   "min": 10,
    "emoji": "🌱",
    "tier": "નવું અંકુર",
    "head": "સુંદર શરૂઆત!",
@@ -784,7 +858,7 @@ function scMsgWith(M){
   const missed=res.cellState.filter(x=>x==='yellow').length;
   const claims=Object.values(pl.claims||{}), invalid=claims.filter(c=>c.valid===false).length;
   const wins=['line1','line2','line3','line4','line5','full','top3','top2','top1','puzzle'].some(k=>w[k]===state.name);
-  const L=M.levels; const _old=[25,20,15,10,1,0], _same=_old.every((v,i)=>Number(L[i].min)===v), _mins=_same?[32,24,17,10,3,0]:L.map(l=>Number(l.min)); let ti=L.length-1; for(let i=0;i<L.length-1;i++){ if(n>=_mins[i]){ ti=i; break; } }
+  const L=M.levels; const _old=[25,20,15,10,1,0], _same=_old.every((v,i)=>Number(L[i].min)===v), _mins=_same?[70,50,35,22,10,0]:L.map(l=>Number(l.min)); let ti=L.length-1; for(let i=0;i<L.length-1;i++){ if(n>=_mins[i]){ ti=i; break; } }
   const lv=L[ti], T=M.tips;
   const tips=[];
   if(res.wrongCount>=3) tips.push(fill(T.manyWrong,res.wrongCount)); else if(res.wrongCount>0) tips.push(fill(T.fewWrong,res.wrongCount));
@@ -986,8 +1060,9 @@ function render(){
   }
   if(['question','locked','spinning','revealing','active'].includes(r.status)) body+=`<div class="card">${powerHTML(r,p)}</div>`;
   if(r.status==='locked') body+=phaseDone(r)?`<div class="card" style="text-align:center;font-weight:800">🏁 PHASE ${phaseInfo(r).ph} પૂરો!<div class="muted">હવે PHASE ${Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1} ની રાહ જુઓ — Host શરૂ કરશે.</div></div>`:`<div class="card muted">⏱ સમય પૂરો — next question ની રાહ જુઓ.</div>`;
+  if(['locked','active','spinning','revealing','ended'].includes(r.status)) body+=surpDrawHTML(r,p);
   if(r.status==='ended') body+=`<div class="card muted">Game પૂરી — results ની રાહ જુઓ.</div>`;
-  if(['question','locked','spinning','revealing','active','ended'].includes(r.status)) body+=puzBoxHTML(r);
+  if(['question','locked','spinning','revealing','active','ended'].includes(r.status)) body+=surpChipHTML(r,p)+puzBoxHTML(r);
 
   let cellState=Array(25).fill(null);
   if(r.status==='revealed'){ cellState=playerResults(state.name).cellState; }
@@ -1033,7 +1108,7 @@ function render(){
     ${step>WINNER_ORDER.length?wcMineHTML()+'<div style="margin-top:10px;padding:12px;border-radius:14px;background:#fdf2f8;text-align:center"><div style="font-size:1.15rem;font-weight:800">🙏 ભાગ લેવા બદલ ધન્યવાદ!</div><div class="muted">તમારું Thank You Card મેળવો</div><button class="btn secondary" onclick="tyMine()">🖼 મારું Thank You Card</button></div>'+(scOn()?'<div style="margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#fce7f3);text-align:center"><div style="font-size:1.15rem;font-weight:800">🎁 તમારું Scratch Card</div><div class="muted">'+(scOn()?'તમારા માટે ખાસ સંદેશ – ઘસીને જુઓ!':'🔒 Host Scratch Card ખોલશે ત્યારે ખુલશે')+'</div><button class="btn" onclick="scOpen()">'+(scOn()?'🎁 Scratch કરો':'🔒 Scratch Card')+'</button></div>':'')+'':''}
     </div>`;
     const revMap={}; Object.entries(p.marks).forEach(([ci,qi])=>{revMap[qi]=+ci;});
-    body+=puzFinalHTML(r,p);
+    body+=vaultHTML(r,p,res)+puzFinalHTML(r,p);
     body+=`<div class="card overflow"><h2>તમારો Summary (${res.correctCount} Correct / ${res.wrongCount} Wrong)</h2>
     <div style="text-align:center;margin:8px 0 12px;padding:14px;border-radius:16px;background:${res.netScore<0?'#fee2e2':'#dcfce7'}">
       <div style="font-size:.95rem;font-weight:700;color:#444">🎯 Net Score</div>

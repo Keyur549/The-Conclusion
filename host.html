@@ -270,6 +270,34 @@ body.bkdraw #pj .pgph{opacity:.9}
 .pgfly .pgroll{position:relative;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;-webkit-text-fill-color:#fff;font-family:Inter,system-ui,sans-serif;font-weight:900;filter:none;text-shadow:0 5px 0 rgba(0,0,0,.28),0 0 26px rgba(255,255,255,.7)}
 .pgfly.hit .pgroll{animation:pghit .7s ease-out}
 
+
+/* ---- v4: ivory mat + premium royal frame, dark phase label ---- */
+.pgph{display:inline-block;padding:3px 16px;border-radius:99px;background:rgba(255,255,255,.94);color:#1b0f55;text-shadow:none;box-shadow:0 2px 10px rgba(0,0,0,.25);font-weight:900}
+#pj .pgph{color:#1b0f55}
+.pgx{--bw:clamp(9px,1.7vh,15px);position:relative;background:linear-gradient(160deg,#fffdf7,#efe5cf);padding:3%;border-radius:2px;border:var(--bw) solid transparent;
+ border-image:linear-gradient(135deg,#fff7c9 0%,#f0c230 14%,#a87208 30%,#ffe98a 46%,#c18a0c 62%,#7a5200 78%,#ffe58a 90%,#fff7c9 100%) 1;
+ box-shadow:0 20px 48px rgba(0,0,0,.5),0 0 0 2px #4d3300,inset 0 0 0 2px #7a5200,inset 0 0 0 4px rgba(255,255,255,.85),inset 0 0 26px rgba(120,80,0,.28)}
+.pgx.full{padding:1.6%}
+.pgcn{position:absolute;width:calc(var(--bw)*2.3);height:calc(var(--bw)*2.3);transform:rotate(45deg);border-radius:22%;background:radial-gradient(circle at 34% 30%,#fff 0,#ff5c7a 28%,#c3123a 62%,#6a0620 100%);border:calc(var(--bw)*.22) solid #ffe27a;box-shadow:0 2px 6px rgba(0,0,0,.5),inset 0 0 6px rgba(255,255,255,.6);z-index:25}
+.pgcn.a{left:calc(var(--bw)*-1.65);top:calc(var(--bw)*-1.65)}.pgcn.b{right:calc(var(--bw)*-1.65);top:calc(var(--bw)*-1.65)}
+.pgcn.c{left:calc(var(--bw)*-1.65);bottom:calc(var(--bw)*-1.65)}.pgcn.d{right:calc(var(--bw)*-1.65);bottom:calc(var(--bw)*-1.65)}
+.pgc.tgt .pgback{box-shadow:inset 0 0 0 3px #fff,0 0 0 3px #1b0f55,0 0 22px 6px rgba(27,15,85,.45)}
+.pgc.on.old{opacity:.5;filter:saturate(.5) brightness(.95)}
+/* ---- Image Unveil (phase end) ---- */
+#unv{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;background:radial-gradient(circle at 50% 40%,#2a1458,#0b0618 70%);color:#fff;font-family:inherit;animation:unvin .5s}
+@keyframes unvin{from{opacity:0}}
+#unv .ub{font-size:3.2vh;font-weight:900;letter-spacing:.08em;color:#ffd447;text-shadow:0 0 24px rgba(255,212,71,.6)}
+#unv .ug{position:relative;overflow:hidden;width:min(62vh,80vw);aspect-ratio:1;display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vh;border-radius:2vh;padding:1.4vh;background:#1b0f3a;box-shadow:0 0 0 .6vh #ffd447,0 0 7vh rgba(255,200,60,.0);transition:gap 1s ease,box-shadow 1s ease,padding 1s ease}
+#unv .ug i{display:block;border-radius:1.2vh;background-size:300% 300%;background-repeat:no-repeat}
+#unv.glow .ug{box-shadow:0 0 0 .6vh #ffd447,0 0 7vh rgba(255,200,60,.85)}
+#unv.close .ug{gap:0;padding:0}#unv.close .ug i{border-radius:0}
+#unv .ug:after{content:'';position:absolute;inset:0;border-radius:2vh;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);transform:translateX(-120%);pointer-events:none}
+#unv.shine .ug:after{transition:transform 1s ease;transform:translateX(120%)}
+#unv .uc{min-height:6vh;padding:1.2vh 4vh;border-radius:99px;font-size:3.4vh;font-weight:900;color:#3a2300;background:linear-gradient(135deg,#fff1b0,#ffc83d 55%,#d99200);box-shadow:0 0 0 .4vh #fff3,0 1vh 3vh rgba(0,0,0,.4);opacity:0;transition:opacity .4s}
+#unv.cap .uc{opacity:1}
+#unv .ux{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#unv .ux u{position:absolute;top:-4vh;width:1.1vh;height:1.8vh;animation:unvfall linear forwards}
+@keyframes unvfall{to{transform:translateY(112vh) rotate(720deg)}}
 </style>
 </head>
 <body>
@@ -1807,7 +1835,7 @@ function drawStage(r){
     if(I.drawn.indexOf(j)>=0) cells+=`<div class="pgc on${j===I.last?(GA.landed&&GA.idx===r.curIdx?' fresh':' newest'):' old'}" data-j="${j}"><i class="pgi" style="background-position:${pgPos(j)},0 0"></i></div>`;
     else cells+=`<div class="pgc em${j===I.cur?' tgt':''}" data-j="${j}" style="${pgCol(j)}"><div class="pgback"><span class="pgbn">${j+1}</span></div></div>`;
   }
-  return `<div class="pgwrap"><div class="pgph">🃏 PHASE ${I.k+1} · ${I.drawn.length}/${PHASE_LEN}</div><div class="pgx${I.drawn.length>=PHASE_LEN?' full':''}" style="--im:url('${pgImgUrl(r,I.k)}')">${cells}</div></div>`;
+  return `<div class="pgwrap"><div class="pgph">🃏 PHASE ${I.k+1} · ${I.drawn.length}/${PHASE_LEN}</div><div class="pgx${I.drawn.length>=PHASE_LEN?' full':''}" style="--im:url('${pgImgUrl(r,I.k)}')">${cells}<s class="pgcn a"></s><s class="pgcn b"></s><s class="pgcn c"></s><s class="pgcn d"></s></div></div>`;
 }
 function gridDraw(r){
   const idx=r.curIdx, num=qNo(r,idx), total=PHASE_LEN; GA={idx,landed:false};
@@ -1849,14 +1877,36 @@ function pgSetupHTML(r){
   const L=[['phase1','Phase 1'],['phase2','Phase 2'],['phase3','Phase 3'],['phase4','Phase 4'],['puzzle','🧩 Mystery']];
   return `<div class="card"><h2 style="margin:0 0 4px">🖼 Images (ઇચ્છા મુજબ)</h2><div class="muted" style="margin-bottom:8px">Phase 1-4 = 3×3 Card Draw ની Image · 🧩 Mystery = 4×4 Blur Image (Players ને છેલ્લે ખુલે). Upload ન કરો તો Default Images વપરાશે. Image ચોરસ (square) હોય તો સારું.</div>
   <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">${L.map(([k,t])=>`<div style="width:112px;text-align:center"><div style="width:112px;height:112px;border-radius:12px;overflow:hidden;background:#ddd"><img src="/pz/${r.code}/${k}?v=${(r.pzV||{})[k]||0}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="font-weight:700;font-size:.85rem;margin:4px 0">${t}</div>
-  <label class="btn ghost" style="display:block;padding:4px 6px;min-width:0;font-size:.8rem;cursor:pointer">📤 Upload<input type="file" accept="image/*" style="display:none" onchange="pgUpload('${k}',this)"></label>${(r.pzV||{})[k]?`<button class="btn ghost" style="padding:2px 6px;min-width:0;font-size:.75rem;margin-top:3px" onclick="pgReset('${k}')">↩ Default</button>`:''}</div>`).join('')}</div></div>`;
+  ${k!=='puzzle'?`<input type="text" maxlength="40" placeholder="Caption: ${PG_CAPS[+k.slice(5)-1]}" value="${esc((r.pzCap||{})[k]||'')}" onchange="pgCap('${k}',this.value)" style="width:100%;box-sizing:border-box;font-size:.72rem;margin-bottom:4px;padding:3px 4px">`:''}<label class="btn ghost" style="display:block;padding:4px 6px;min-width:0;font-size:.8rem;cursor:pointer">📤 Upload<input type="file" accept="image/*" style="display:none" onchange="pgUpload('${k}',this)"></label>${(r.pzV||{})[k]?`<button class="btn ghost" style="padding:2px 6px;min-width:0;font-size:.75rem;margin-top:3px" onclick="pgReset('${k}')">↩ Default</button>`:''}</div>`).join('')}</div></div>`;
 }
 // Server drives three synced phases: 'spinning' (wheel turns) -> 'revealing' (big number popup) -> 'question' (full question+timer).
 // Every connected client (host and all players) reacts to the SAME broadcast, so timing always matches exactly.
+
+// ---------- 🖼 Image Unveil: phase image revealed on projector at the end of each phase ----------
+let unvDone=-1, unvT=[];
+const PG_CAPS=['દીવાની રોશની','હિમાલયનું શિખર','નદી કિનારે સંધ્યા','મંડલ — પૂર્ણતા'];
+function pgCapOf(r,k){ const c=(r.pzCap||{})['phase'+(k+1)]; if(c&&String(c).trim()) return String(c).trim(); return (r.pzV||{})['phase'+(k+1)]?('PHASE '+(k+1)+' પૂરો'):PG_CAPS[k]; }
+function pgCap(key,v){ socket.emit('host:setPzCap',{code:state.code,key,text:v}); }
+function unveilClear(){ unvT.forEach(clearTimeout); unvT=[]; const o=document.getElementById('unv'); if(o) o.remove(); }
+function unveil(r,k){
+  unveilClear(); const o=document.createElement('div'); o.id='unv'; const url=pgImgUrl(r,k), cap=pgCapOf(r,k);
+  let g=''; for(let j=0;j<9;j++) g+='<i style="background-image:url('+url+');background-position:'+pgPos(j)+'"></i>';
+  o.innerHTML='<div class="ub">🎉 PHASE '+(k+1)+' પૂરો!</div><div class="ug">'+g+'</div><div class="uc"></div><div class="ux"></div>';
+  document.body.appendChild(o); const at=(ms,f)=>unvT.push(setTimeout(f,ms)); const c=o.querySelector('.uc');
+  try{ playThump(); }catch(e){}
+  at(900,()=>o.classList.add('glow')); at(1500,()=>{ o.classList.add('close'); try{playThump();}catch(e){} }); at(2500,()=>o.classList.add('shine'));
+  at(3500,()=>{ o.classList.add('cap'); let n=0; const t=setInterval(()=>{ n++; c.textContent=cap.slice(0,n); if(n>=cap.length) clearInterval(t); },60); unvT.push(t); });
+  at(4400,()=>{ try{playFanfare();}catch(e){} const x=o.querySelector('.ux'); let h=''; const cols=['#fde047','#f43f5e','#22d3ee','#a3e6a0','#fb923c','#c084fc','#fff'];
+    for(let i=0;i<70;i++) h+='<u style="left:'+(Math.random()*100)+'%;background:'+cols[i%7]+';animation-duration:'+(2+Math.random()*2.2)+'s;animation-delay:'+(Math.random()*.8)+'s"></u>'; x.innerHTML=h; });
+  at(9500,()=>{ o.style.transition='opacity .6s'; o.style.opacity=0; }); at(10200,unveilClear);
+}
 function maybeAnimate(r){
   try{ document.body.classList.toggle('bkdraw', r.status==='spinning'||r.status==='question'||(r.status==='revealing'&&!r.betEnd)); }catch(e){}
   if(r.status==='active'){ lastWheelIdx=null; lastRevealIdx=null; lastQuestionIdx=null; lastSpokenIdx=null; pendingReveal=null; numberPopup=null; }
-  if(r.status==='spinning' && r.curIdx!=null && r.curIdx!==lastWheelIdx){
+  try{ const nU=(r.usedIdx||[]).length;
+    if(r.status==='locked' && nU>0 && nU%PHASE_LEN===0 && nU<=PHASE_LEN*4 && unvDone!==nU){ unvDone=nU; unveil(r,nU/PHASE_LEN-1); }
+    if(r.status==='lobby'||r.status==='waiting'){ unvDone=-1; } }catch(e){}
+  if(r.status==='spinning' && r.curIdx!=null && r.curIdx!==lastWheelIdx){ unveilClear();
     lastWheelIdx=r.curIdx;
     pendingReveal=null; // previous round's number disappears exactly now
     wheelLayout=computeLayout(r);
@@ -2027,7 +2077,8 @@ function openDashboard(){
   #dash .dwl{font-weight:800;color:var(--k1);font-size:.95rem;letter-spacing:.3px}#dash .dwav{font-size:2.3rem;margin:4px 0;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))}#dash .dwn{font-weight:800;font-size:1.08rem;color:#fff}#dash .dwz{color:var(--mut);font-size:.85rem}#dash .dws{margin-top:4px;font-size:.9rem;color:var(--ws);font-weight:600}
   #dash select{border:1px solid var(--bdf);background:rgba(0,0,0,.35);color:#fff}
   @media print{#dash .dbar{display:none}#dash{position:static;background:#fff;color:#000}}
-  </style>`;
+  
+</style>`;
   const html=`${css}<div class="dwrap">
   <div class="dbar"><button class="dbtn" id="thbtn" onclick="dashTheme()">🎨 Theme</button><button class="dbtn" onclick="document.getElementById('dash').requestFullscreen&&document.getElementById('dash').requestFullscreen()">⛶ Full Screen</button><button class="dbtn" onclick="closeDashboard()">✕ બંધ કરો</button></div>
   <h1><span style="-webkit-text-fill-color:initial">🎴</span> જ્ઞાન શોધ – Lucky Card Quiz Championship</h1><div class="dsub">Final Dashboard · Room ${esc(r.code)}</div>
@@ -2210,7 +2261,7 @@ async function downloadExcel(){
 
     const wonCats = WINNER_ORDER.filter(k=>k!=='zone'&&w[k]===name).map(k=>WINNER_LABELS[k]);
     return {name, zone:p.zone||'', avatar:p.avatar||'', correct:res.correctCount,
-      wrong:res.cellState.filter(s=>s==='red').length, netScore:res.netScore, betPts:res.betPts||0, speedPts:res.speedPts||0, fast:res.fastCount, streak:(r.players[name].cards&&r.players[name].cards.streak!=null)?(res.streakOk?'સફળ (+10)':'નિષ્ફળ'):'—', shield:(r.players[name].cards&&r.players[name].cards.shield!=null)?(res.shieldSaved?'બચાવ્યું':'વાપર્યું'):'—', validLines, invalidLines,
+      wrong:res.cellState.filter(s=>s==='red').length, netScore:res.netScore, betPts:res.betPts||0, speedPts:res.speedPts||0, surpPts:res.surpPts||0, nKeys:res.nKeys||0, vaultPts:res.vaultPts||0, fast:res.fastCount, streak:(r.players[name].cards&&r.players[name].cards.streak!=null)?(res.streakOk?'સફળ (+10)':'નિષ્ફળ'):'—', shield:(r.players[name].cards&&r.players[name].cards.shield!=null)?(res.shieldSaved?'બચાવ્યું':'વાપર્યું'):'—', validLines, invalidLines,
       fullHouse:res.fullHouse?'Yes':'No', 
       lineWinner: wonCats.length?wonCats.join(', '):'—',
       winTime: wonCats.length?WINNER_ORDER.filter(k=>w[k]===name&&!/^top/.test(k)&&k!=='zone').map(k=>WINNER_LABELS[k]+': '+fmtDur(w[k+'_ms'])).join(' | '):'—'};
@@ -2222,7 +2273,7 @@ async function downloadExcel(){
   ws.columns=[
     {header:'Rank',key:'rank',width:7},{header:'Player',key:'name',width:20},{header:'Zone',key:'zone',width:16},
     {header:'Avatar',key:'avatar',width:8},{header:'Correct',key:'correct',width:10},{header:'Wrong',key:'wrong',width:10},
-    {header:'Net Score',key:'netScore',width:11},{header:'⚡ Fast',key:'fast',width:8},{header:'🏆 Streak',key:'streak',width:12},{header:'⚡ Speed',key:'speedPts',width:9},{header:'🛡 Shield',key:'shield',width:11},
+    {header:'Net Score',key:'netScore',width:11},{header:'⚡ Fast',key:'fast',width:8},{header:'🏆 Streak',key:'streak',width:12},{header:'⚡ Speed',key:'speedPts',width:9},{header:'🎰 Surprise',key:'surpPts',width:11},{header:'🗝 Keys',key:'nKeys',width:8},{header:'🔐 Vault',key:'vaultPts',width:9},{header:'🛡 Shield',key:'shield',width:11},
     {header:'Valid Lines',key:'validLines',width:12},{header:'Invalid Lines',key:'invalidLines',width:13},
     {header:'Full House',key:'fullHouse',width:12},
     {header:'Line Winner',key:'lineWinner',width:22},
@@ -2349,6 +2400,19 @@ function fastMapC(r){
     if(fast){ list.sort((x,y)=>x.ts-y.ts||x.j-y.j); speed[qi]=list.slice(0,SPEED_PTS.length).map(x=>x.n); } else if(best) fm[qi]=best.n; });
   fm.__speed=speed; r._fm=fm; return fm;
 }
+const VAULT_PTS=[0,2,5,10,20], KEY_NEED=6;
+function surpVault(room,p,pname,cellState,fm,shieldSaved){
+  const cor=[0,0,0,0], red=[0,0,0,0];
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const pos=qPos(room,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k>3) return; const st=cellState[+ci]; if(st==='green') cor[k]++; else if(st==='red') red[k]++; });
+  const keys=cor.map(c=>c>=KEY_NEED), nKeys=keys.filter(Boolean).length;
+  let surpPts=0; const surpRes=[];
+  for(let k=1;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
+    if(t==='x2') pts=cor[k];
+    else if(t==='safe'){ pts=red[k]; const sq=(p.cards||{}).shield; if(shieldSaved && sq!=null && Math.floor(qPos(room,sq)/PHASE_LEN)===k) pts-=1; }
+    else if(t==='fast') (room.usedIdx||[]).forEach((qi,pos)=>{ if(Math.floor(pos/PHASE_LEN)===k && fm && fm[qi]===pname) pts+=3; });
+    surpRes.push({k,t,pts}); surpPts+=pts; }
+  return {keys,nKeys,vaultPts:VAULT_PTS[nKeys]||0,surpPts,surpRes,phaseCor:cor};
+}
 function scoreExtra(r,pname,cellState,correctCount,wrongCount){
   const p=r.players[pname], fm=fastMapC(r), cards=p.cards||{};
   const sc=cards.shield!=null?markCell(p,cards.shield):undefined;
@@ -2357,9 +2421,9 @@ function scoreExtra(r,pname,cellState,correctCount,wrongCount){
   const slots=streakSlotsFull(r,p);
   const streakRes=slots.map(qi=>{ const ci=markCell(p,qi); return ci===undefined?'miss':(cellState[ci]==='green'?'ok':'bad'); });
   const streakOk=slots.length===STREAK_LEN&&streakRes.every(x=>x==='ok');
-  const bs=betSpeed(r,p,pname,cellState,fm);
-  return {shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,
-    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts};
+  const bs=betSpeed(r,p,pname,cellState,fm), sv=surpVault(r,p,pname,cellState,fm,shieldSaved);
+  return {surpPts:sv.surpPts,surpRes:sv.surpRes,keys:sv.keys,nKeys:sv.nKeys,vaultPts:sv.vaultPts,phaseCor:sv.phaseCor,shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,
+    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts+sv.surpPts+sv.vaultPts};
 }
 function cardTags(r,p,res,qi){
   const c=p.cards||{}, t=[];
@@ -2611,7 +2675,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
  function stage(r){var h='';try{if((!wheelLayout||!spinning)&&typeof computeLayout==='function')wheelLayout=computeLayout(r);
    h=(typeof drawStage==='function')?drawStage(r):drawStage(r)}catch(e){h=''}
   var n=(typeof pendingReveal!=='undefined'&&pendingReveal!=null&&!spinning&&r.status==='revealing')?pendingReveal:null;
-  return '<div class="pjstg"><div class="pjwh">'+h+'</div>'+(n!=null?'<div class="pjnum"><div class="pjs">પ્રશ્ન નંબર</div><div class="pjbig pjw">'+n+'</div></div>':'')+'</div>'}
+  return '<div class="pjstg"><div class="pjwh">'+h+'</div>'+''+'</div>'}
  function claim(r,k){var w=r.winners||{},ms=w[k+'_ms'],ts=w[k+'_ts'],tie=w[k+'_tie'],o='';
   if(ms!=null&&typeof fmtDur==='function')o+='⏱ '+esc2(fmtDur(ms))+' માં Claim';
   if(w[k+'_score']!=null)o+=(o?' · ':'')+'🎯 Score '+esc2(w[k+'_score']);

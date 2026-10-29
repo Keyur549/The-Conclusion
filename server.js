@@ -194,7 +194,7 @@ function puzCore(room,p){
     const k=Math.floor(pos/PHASE_LEN); if(k>=PUZ_PH) return; bk[k].push((p.markTs||{})[qi]||0); });
   const perm=p.pzPerm||[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]; let last=0, count=0; const tiles=[], byPhase=[];
   bk.forEach((a,k)=>{ a.sort((x,y)=>x-y); const t=a.slice(0,4).map((ts,j)=>{ count++; if(ts>last) last=ts; return perm[k*4+j]; }); tiles.push(t); byPhase.push(t.length); });
-  return {tiles,count,last,byPhase};
+  return {tiles,count,last,byPhase,cor:bk.map(a=>a.length)};
 }
 function puzzleOf(room,p){
   const c=puzCore(room,p), full=c.count===PUZ_PH*4;
@@ -203,9 +203,25 @@ function puzzleOf(room,p){
 function puzPhaseDone(room,k){ const n=(room.usedIdx||[]).length, e=(k+1)*PHASE_LEN; return n>e || (n===e && ['locked','ended','box','opening','revealed'].includes(room.status)); }
 // what a player may already see DURING the game: pieces of finished phases only (pop in at the end of each phase)
 function puzLive(room,p){
-  const c=puzCore(room,p), done=[], got=[], cnt=[];
-  for(let k=0;k<PUZ_PH;k++){ const d=puzPhaseDone(room,k); done.push(d); cnt.push(d?c.tiles[k].length:0); if(d) got.push(...c.tiles[k]); }
-  return {done,got,cnt};
+  const c=puzCore(room,p), done=[], got=[], cnt=[], keys=[];
+  for(let k=0;k<PUZ_PH;k++){ const d=puzPhaseDone(room,k); done.push(d); cnt.push(d?c.tiles[k].length:0); keys.push(!!d && c.cor[k]>=KEY_NEED); if(d) got.push(...c.tiles[k]); }
+  return {done,got,cnt,keys};
+}
+// ---------- 🎰 Phase Surprise (personal) + 🗝 Keys / Final Vault ----------
+const VAULT_PTS=[0,2,5,10,20], KEY_NEED=6, SURP_TYPES=['x2','safe','fast'];
+function pickSurp(){ return SURP_TYPES[Math.floor(Math.random()*SURP_TYPES.length)]; }
+// A surprise drawn at the end of phase k-1 applies to ALL 9 questions of phase k (index k = 1..3) — and to no other phase.
+function surpVault(room,p,pname,cellState,fm,shieldSaved){
+  const cor=[0,0,0,0], red=[0,0,0,0];
+  Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const pos=qPos(room,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k>3) return; const st=cellState[+ci]; if(st==='green') cor[k]++; else if(st==='red') red[k]++; });
+  const keys=cor.map(c=>c>=KEY_NEED), nKeys=keys.filter(Boolean).length;
+  let surpPts=0; const surpRes=[];
+  for(let k=1;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
+    if(t==='x2') pts=cor[k];
+    else if(t==='safe'){ pts=red[k]; const sq=(p.cards||{}).shield; if(shieldSaved && sq!=null && Math.floor(qPos(room,sq)/PHASE_LEN)===k) pts-=1; }
+    else if(t==='fast') (room.usedIdx||[]).forEach((qi,pos)=>{ if(Math.floor(pos/PHASE_LEN)===k && fm && fm[qi]===pname) pts+=3; });
+    surpRes.push({k,t,pts}); surpPts+=pts; }
+  return {keys,nKeys,vaultPts:VAULT_PTS[nKeys]||0,surpPts,surpRes,phaseCor:cor};
 }
 // Host-supplied images (phase 1-4 for the 3x3 draw, "puzzle" for the 4x4 Mystery Image) live in memory, outside the room state.
 const PZ = {}; const PZ_KEYS=['phase1','phase2','phase3','phase4','puzzle'];
@@ -239,8 +255,9 @@ function playerResults(room, pname, fm){
     const slotRes = slots.map(qi=>{ const ci=markCell(p,qi); return ci===undefined ? 'miss' : (cellState[ci]==='green' ? 'ok' : 'bad'); });
     const streakOk = slots.length===STREAK_LEN && slotRes.every(x=>x==='ok');
     const bs = betSpeed(room,p,pname,cellState,fm);
-    Object.assign(out, { shieldSaved, fastQs, fastCount:fastQs.length, streakSlots:slots, streakRes:slotRes, streakOk, streakBonus: streakOk?STREAK_BONUS:0, betPts:bs.betPts, speedPts:bs.speedPts, betRes:bs.bets,
-      netScore: correctCount - (wrongCount-shieldSaved) + fastQs.length*FAST_BONUS + (streakOk?STREAK_BONUS:0) + bs.betPts + bs.speedPts });
+    const sv = surpVault(room,p,pname,cellState,fm,shieldSaved);
+    Object.assign(out, { surpPts:sv.surpPts, surpRes:sv.surpRes, keys:sv.keys, nKeys:sv.nKeys, vaultPts:sv.vaultPts, phaseCor:sv.phaseCor, shieldSaved, fastQs, fastCount:fastQs.length, streakSlots:slots, streakRes:slotRes, streakOk, streakBonus: streakOk?STREAK_BONUS:0, betPts:bs.betPts, speedPts:bs.speedPts, betRes:bs.bets,
+      netScore: correctCount - (wrongCount-shieldSaved) + fastQs.length*FAST_BONUS + (streakOk?STREAK_BONUS:0) + bs.betPts + bs.speedPts + sv.surpPts + sv.vaultPts });
   } else out.netScore = correctCount - wrongCount;
   return out;
 }
@@ -551,6 +568,7 @@ io.on('connection', (socket) => {
     const _P=ensurePools(r), _k=Math.floor(r.usedIdx.length/PHASE_LEN), _c=(_P[_k]||[]).filter(i=>avail.includes(i));
     const _src=_c.length?_c:avail;   // draw from the current phase's own 9 questions
     const idx = _src[Math.floor(Math.random()*_src.length)];
+    { const _n=r.usedIdx.length; if(_n>0 && _n%PHASE_LEN===0 && _n/PHASE_LEN<=3){ const _k=_n/PHASE_LEN; for(const _p of Object.values(r.players)){ _p.surp=_p.surp||{}; if(!_p.surp[_k]) _p.surp[_k]=pickSurp(); } } }
     r.status='spinning'; r.curIdx=idx; r.usedIdx=[...r.usedIdx, idx]; r.timerEnd=null; r.paused=false; r.pausedMs=null; r.lastSpinAt=Date.now();
     broadcast(code);
     // Safety net only: if the host's own wheel never confirms completion (tab closed, crash, etc.),
@@ -575,6 +593,19 @@ io.on('connection', (socket) => {
   socket.on('host:spinComplete', ({code, idx}) => { advanceToRevealing(code, idx); });
 
   // Host: question timer length (10-60 s) and skip the remaining time
+  // Player: open the Surprise Card at the end of a phase (the surprise is random; it applies to the NEXT phase only)
+  socket.on('player:surprise', ({code,name,k}, cb) => {
+    seen(code,name);
+    const r = rooms[code]; const p = r&&r.players[name]; k=+k;
+    if(!r||!p||![1,2,3].includes(k)) return cb&&cb({ok:false});
+    if(!puzPhaseDone(r,k-1)) return cb&&cb({ok:false,error:'Phase હજી પૂરો થયો નથી'});
+    p.surp=p.surp||{}; if(!p.surp[k]) p.surp[k]=pickSurp(); p.surpOpen=p.surpOpen||{}; p.surpOpen[k]=true;
+    broadcast(code); cb&&cb({ok:true,type:p.surp[k]});
+  });
+  socket.on('host:setPzCap', ({code,key,text}) => {
+    const r = rooms[code]; if(!r || !['phase1','phase2','phase3','phase4'].includes(key)) return;
+    r.pzCap=r.pzCap||{}; const t=String(text||'').trim().slice(0,60); if(t) r.pzCap[key]=t; else delete r.pzCap[key]; broadcast(code);
+  });
   socket.on('host:setPzImg', ({code,key,data}, cb) => {
     const r = rooms[code]; if(!r || !PZ_KEYS.includes(key)) return cb&&cb({ok:false});
     PZ[code]=PZ[code]||{}; r.pzV=r.pzV||{};
@@ -776,3 +807,5 @@ setInterval(()=>{
 }, 1000);
 
 server.listen(PORT, () => console.log('Gyan Shodh Quiz server running on port '+PORT));
+
+if (process.env.GS_TEST) module.exports = { rooms, playerResults, fastMap, computeWinners, puzzleOf, surpVault, pickSurp, qPos, PHASE_LEN };

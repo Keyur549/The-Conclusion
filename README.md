@@ -1,5 +1,10 @@
 
 ## 🆕 Conclusion: 🃏 3×3 Card Draw + 🧩 Mystery Image (v2)
+- 🎰 **Personal Surprise** – દરેક Phase 1/2/3 પૂરો થતાં દરેક Player પોતે 1 Surprise Card ખોલે (×2 Points · 🛡 No Minus · ⚡ Fast +3). એ ફક્ત **પછીના Phase ના 9 પ્રશ્ન** પર લાગુ પડે (Phase 1→2, 2→3, 3→4).
+- 🗝 **Key & 🔐 Vault** – દરેક Phase ના 6 સાચા જવાબ = 1 ચાવી. અંતે Vault: 0🗝=0 · 1🗝=+2 · 2🗝=+5 · 3🗝=+10 · 4🗝=+20 points.
+- 🖼 **Image Unveil** – Phase પૂરો થતાં projector પર Phase ની Image ખુલે + Caption. Lobby માં દરેક Phase નું Caption લખી શકાય.
+- 📊 **Levels (Net Score)**: L1 ≥70 · L2 ≥50 · L3 ≥35 · L4 ≥22 · L5 ≥10 · L6 ≥0 · L7 નીચે (messages.json માં બદલી શકાય). પરફેક્ટ Player ≈107.
+- Excel માં Surprise / Keys / Vault columns ઉમેર્યા.
 - Wheel ni jagya e 3×3 Card Grid: darek Phase (9 question) ni potani image; darek question no card flip thai ne grid ma set thay, pachhi random number nikle
 - Lobby ma 🖼 Images: Phase 1-4 image ane 🧩 Mystery (4x4) image host upload kari shake (na kare to default)
 - Phase 1 = question 1-9, Phase 2 = 10-18, Phase 3 = 19-27, Phase 4 = 28-36 (question list ni order). Draw e Phase na j 9 ma thi thay: card N flip thai ne grid ma N-mi jagya e fit thay, pachhi e Phase no N-mo question aave. Player na Card ma Phase1-3 na 6 ane Phase4 na 7 javab
@@ -8,6 +13,7 @@
 - Card colour: vibrant rainbow game cards (darek number nu alag colour). Draw: card upar-jamna khune thi fast ghumtu aave, vachche thambe, number generate thay, pachhi grid ma fit thay (lagbhag 7 sec) Image size: square 1000x1000 px (JPG/PNG); upload ma auto square crop + 1000x1000
 - 🔥 FINAL PHASE (Phase 4): projector par red glow + heartbeat, last 10 sec ma tick+thump
 - 🧩 Image Winner reveal: image dhire dhire blur thi clear (4 sec), pachhi naam + time + fanfare
+- Projector: alag moto white number popup kadhi nakhyo (number fakt card par j generate thay); Phase label dark; grid ma ivory mat + premium royal gold frame (ruby gems)
 - Mystery Image: darek Phase na koi pan 4 sacha javab = 4 tukda (Fast Round pan ganay)
 - Tukda Phase puro thay tyare blurred grid ma set thay; image last ma j khule; 16 tukda complete = auto claim, winner reveal ma time pan dekhay
 - Winner 11: 5 Line, Full House, Top 3 Score, Zone Average, 🧩 Image Winner
