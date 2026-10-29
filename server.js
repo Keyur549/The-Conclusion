@@ -208,7 +208,7 @@ function puzLive(room,p){
   return {done,got,cnt,keys};
 }
 // ---------- 🎰 Phase Surprise (personal) + 🗝 Keys / Final Vault ----------
-const VAULT_PTS=[0,2,5,10,20], KEY_NEED=6, SURP_TYPES=['x2','safe','fast'];
+const VAULT_PTS=[0,2,5,10,20], KEY_NEED=4, SURP_TYPES=['x2','safe','fast','pen'];
 function pickSurp(){ return SURP_TYPES[Math.floor(Math.random()*SURP_TYPES.length)]; }
 // A surprise drawn at the end of phase k-1 applies to ALL 9 questions of phase k (index k = 1..3) — and to no other phase.
 function surpVault(room,p,pname,cellState,fm,shieldSaved){
@@ -219,6 +219,7 @@ function surpVault(room,p,pname,cellState,fm,shieldSaved){
   for(let k=1;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
     if(t==='x2') pts=cor[k];
     else if(t==='safe'){ pts=red[k]; const sq=(p.cards||{}).shield; if(shieldSaved && sq!=null && Math.floor(qPos(room,sq)/PHASE_LEN)===k) pts-=1; }
+    else if(t==='pen') pts=-3*red[k];
     else if(t==='fast') (room.usedIdx||[]).forEach((qi,pos)=>{ if(Math.floor(pos/PHASE_LEN)===k && fm && fm[qi]===pname) pts+=3; });
     surpRes.push({k,t,pts}); surpPts+=pts; }
   return {keys,nKeys,vaultPts:VAULT_PTS[nKeys]||0,surpPts,surpRes,phaseCor:cor};
