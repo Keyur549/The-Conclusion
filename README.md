@@ -5,7 +5,9 @@
 - Phase 1 = question 1-9, Phase 2 = 10-18, Phase 3 = 19-27, Phase 4 = 28-36 (question list ni order). Draw e Phase na j 9 ma thi thay: card N flip thai ne grid ma N-mi jagya e fit thay, pachhi e Phase no N-mo question aave. Player na Card ma Phase1-3 na 6 ane Phase4 na 7 javab
 - Fast Round ni 💰 Bet kadhi nakhi (Fast Round ma fakt speed points)
 - Grid: avela number na card image ma fit thai ne number chhupai jay, junu card faded rahe, navu bright; Phase puro thay tyare poori image bright
-- Card colour: Black + Gold premium (shine sathe). Image size: square 1000x1000 px (JPG/PNG); upload ma auto square crop + 1000x1000
+- Card colour: vibrant rainbow game cards (darek number nu alag colour). Draw: card upar-jamna khune thi fast ghumtu aave, vachche thambe, number generate thay, pachhi grid ma fit thay (lagbhag 7 sec) Image size: square 1000x1000 px (JPG/PNG); upload ma auto square crop + 1000x1000
+- 🔥 FINAL PHASE (Phase 4): projector par red glow + heartbeat, last 10 sec ma tick+thump
+- 🧩 Image Winner reveal: image dhire dhire blur thi clear (4 sec), pachhi naam + time + fanfare
 - Mystery Image: darek Phase na koi pan 4 sacha javab = 4 tukda (Fast Round pan ganay)
 - Tukda Phase puro thay tyare blurred grid ma set thay; image last ma j khule; 16 tukda complete = auto claim, winner reveal ma time pan dekhay
 - Winner 11: 5 Line, Full House, Top 3 Score, Zone Average, 🧩 Image Winner
