@@ -311,6 +311,13 @@ body.bkdraw #pj .pgph{opacity:.9}
 /* v6: card back stays "?"; number exists only on the face revealed by the flip */
 .pgfly .pgfk{background:linear-gradient(145deg,#3d5bff,#8a3dff) !important}
 .pgfly .pgq{position:relative;font-family:Inter,system-ui,sans-serif;font-weight:900;color:#fff;text-shadow:0 5px 0 rgba(0,0,0,.28),0 0 26px rgba(255,255,255,.7);font-size:inherit;line-height:1}
+
+/* v7: side control bar never covers the lobby QR */
+#pj .pjin:has(.pjbar):has(.pjrow){box-sizing:border-box;width:100%!important;max-width:none!important;padding-left:calc(min(215px,19vw) + max(10px,env(safe-area-inset-left,0px)) + 24px)!important;padding-right:24px!important}
+#pj .pjin:has(.pjbar) .pjrow{flex-wrap:nowrap;gap:clamp(14px,3vw,40px)}
+#pj .pjin:has(.pjbar) .pjrow .pjqr{width:min(27vw,40vh,340px);height:min(27vw,40vh,340px);flex:none}
+#pj .pjin:has(.pjbar) .pjrow .pjbig{font-size:clamp(2.2rem,9vh,5rem)}
+@media (max-width:760px){#pj .pjin:has(.pjbar):has(.pjrow){padding-left:24px!important;padding-bottom:calc(52vh) !important}#pj .pjbar{top:auto!important;bottom:0;left:0!important;right:0;transform:none!important;width:auto!important;flex-direction:row!important;flex-wrap:wrap!important;border-radius:16px 16px 0 0;max-height:48vh}#pj .pjin:has(.pjbar) .pjrow{flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -2379,7 +2386,7 @@ const STREAK_LEN=3, STREAK_BONUS=10, FAST_BONUS=1;
 // ---- Phases / Fast-Round Bet / Top-3 speed (same rules as server.js) ----
 const PHASE_LEN = 9, BET_WIN = 10, BET_LOSE = -5, SPEED_PTS = [3,2,1], BET_MS = 8000, FAST_SEC = 20;
 function qPos(r,qi){ return (r.usedIdx||[]).indexOf(qi); }
-function isFastQ(r,qi){ const i=qPos(r,qi); return i>=0 && (i+1)%PHASE_LEN===0; }
+function isFastQ(r,qi){ return false; }   // Fast Round removed: all 9 questions of a phase are normal
 function betSpeed(r,p,pname,cellState,fm){
   let betPts=0, speedPts=0; const bets=[]; const sp=(fm&&fm.__speed)||{};
   Object.keys(sp).forEach(qi=>{ const k=(sp[qi]||[]).indexOf(pname); if(k>=0) speedPts+=SPEED_PTS[k]; });
