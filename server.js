@@ -137,6 +137,9 @@ const STREAK_LEN = 3, STREAK_BONUS = 10, FAST_BONUS = 1;
 
 // ---------- Phases (8 normal + 1 ⚡ Fast Round) · Fast-Round Bet · Top-3 speed bonus ----------
 const PHASE_LEN = 9, BET_WIN = 10, BET_LOSE = -5, SPEED_PTS = [3,2,1], BET_MS = 8000, FAST_SEC = 20;
+const INTRO_SEC = 7.5;
+const PHASE_NAMES_DEF = ['આરંભ','મનન','સાધના','સિદ્ધિ'];
+function cleanPhaseNames(a){ const d=PHASE_NAMES_DEF.slice(); if(!Array.isArray(a)) return d; return d.map((x,i)=>{ const v=String(a[i]==null?'':a[i]).trim().slice(0,40); return v||x; }); }
 function qPos(r,qi){ return (r.usedIdx||[]).indexOf(qi); }
 function isFastQ(r,qi){ const i=qPos(r,qi); return i>=0 && (i+1)%PHASE_LEN===0; }
 function betSpeed(r,p,pname,cellState,fm){
@@ -471,6 +474,7 @@ io.on('connection', (socket) => {
     const t=(x,n)=>String(x==null?'':x).slice(0,n);
     const c={title:t(cert.title,60),sub:t(cert.sub,60),msg:t(cert.msg,120),event:t(cert.event,100),org:t(cert.org,60),signer:t(cert.signer,60),color:/^#[0-9a-f]{6}$/i.test(cert.color||'')?cert.color:''};
     if(typeof cert.logo==='string' && /^data:image\/(png|jpeg|webp);base64,/.test(cert.logo) && cert.logo.length<=450000) c.logo=cert.logo;
+    if(typeof cert.signImg==='string' && /^data:image\/(png|jpeg|webp);base64,/.test(cert.signImg) && cert.signImg.length<=250000) c.signImg=cert.signImg;
     r.cert=c; scheduleBackup(code); cb&&cb({ok:true});
   });
   socket.on('cert:get', ({code}, cb) => { const r=rooms[code]; cb&&cb({ok:!!r, cert:(r&&r.cert)||null, revealed:!!r&&r.status==='revealed'}); });
@@ -544,24 +548,38 @@ io.on('connection', (socket) => {
     cb && cb({ok: id===HOST_ID && pw===HOST_PW});
   });
 
-  socket.on('host:create', ({hostName, maxPlayers, qaText}, cb) => {
+  socket.on('host:create', ({hostName, maxPlayers, qaText, phaseNames}, cb) => {
     const code = randCode();
     const parsed = parseQA(qaText);
     rooms[code] = {
       code, hostName, maxPlayers: maxPlayers||null, status:'lobby',
       questions: parsed.questions, usedIdx:[], curIdx:null, timerEnd:null,
-      players:{}, winners:null, revealStep:0, createdAt: Date.now()
+      players:{}, winners:null, revealStep:0, createdAt: Date.now(), phaseNames: cleanPhaseNames(phaseNames)
     };
     socket.join(code);
     cb && cb({ok:true, code, parseInfo:{count:parsed.questions.length, bad:parsed.bad, usedDefault:parsed.usedDefault}});
     broadcast(code);
   });
 
-  socket.on('host:start', ({code}) => { const r=rooms[code]; if(!r) return; r.joinEnd=null; if(!r.botsPlay) for(const k of Object.keys(r.players)) if(r.players[k].bot) delete r.players[k]; r.status='active'; if(!r.startedAt) r.startedAt=Date.now(); broadcast(code); });
+  socket.on('host:start', ({code}) => { const r=rooms[code]; if(!r) return; r.joinEnd=null; if(!r.botsPlay) for(const k of Object.keys(r.players)) if(r.players[k].bot) delete r.players[k]; r.status='active'; if(!r.startedAt) r.startedAt=Date.now(); r.introPh=0; startPhaseIntro(r,code,0,false); });
 
+  // 🎬 Phase Intro: plays on every player's phone and on the host/projector at the start of each of the 4 phases
+  function startPhaseIntro(r,code,k,auto){
+    r.introFor=k; r.introAt=Date.now(); r.introEnd=Date.now()+(INTRO_SEC+0.6)*1000; broadcast(code);
+    if(auto){ const n=r.usedIdx.length; setTimeout(()=>{ const rr=rooms[code]; if(!rr||rr.introFor!==k||rr.usedIdx.length!==n||!['active','locked'].includes(rr.status)) return; rr.introEnd=0; doSpin(code); }, (INTRO_SEC+0.7)*1000); }
+  }
+  socket.on('host:introDone', ({code}) => { const r=rooms[code]; if(!r||!r.introEnd) return; r.introEnd=0; broadcast(code); });
+  socket.on('host:setPhaseNames', ({code, phaseNames}, cb) => { const r=rooms[code]; if(!r){ cb&&cb({ok:false}); return; } r.phaseNames=cleanPhaseNames(phaseNames); broadcast(code); cb&&cb({ok:true}); });
   const REVEAL_MS=1600;       // how long the big number popup stays up before the question appears
   const SPIN_SAFETY_MS=9000;  // safety net only — if host's browser never confirms, auto-advance so the game can't get stuck
   socket.on('host:spin', ({code}) => {
+    const r = rooms[code]; if(!r) return;
+    if(r.status!=='active' && r.status!=='locked') return;
+    if(r.introEnd && Date.now()<r.introEnd) return;   // Phase Intro is playing
+    const _n0=r.usedIdx.length; if(_n0%PHASE_LEN===0 && Math.floor(_n0/PHASE_LEN)<4 && r.introPh!==Math.floor(_n0/PHASE_LEN)){ r.introPh=Math.floor(_n0/PHASE_LEN); startPhaseIntro(r,code,r.introPh,true); return; }
+    doSpin(code);
+  });
+  function doSpin(code){
     const r = rooms[code]; if(!r) return;
     if(r.status!=='active' && r.status!=='locked') return; // ignore duplicate/racing spin clicks — fixes skipped questions
     const avail=[]; for(let i=0;i<r.questions.length;i++) if(!r.usedIdx.includes(i)) avail.push(i);
@@ -578,7 +596,7 @@ io.on('connection', (socket) => {
       const rr=rooms[code]; if(!rr||rr.status!=='spinning'||rr.curIdx!==idx) return;
       advanceToRevealing(code, idx);
     }, SPIN_SAFETY_MS);
-  });
+  }
   function beginQ(code, idx){
     const rr=rooms[code]; if(!rr||rr.status!=='revealing'||rr.curIdx!==idx) return;
     const sec = isFastQ(rr,idx) ? Math.min(rr.qSec||30, FAST_SEC) : (rr.qSec||30);

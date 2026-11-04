@@ -1,3 +1,15 @@
+# ✨ Latest update (Phase intro · Logo splash · Premium certificate)
+
+**Upload karvani files:** `server.js`, `host.html`, `player.html`, `logo.png` (navi file).
+
+- **Darek Phase no Intro** – Phase 1 Game Start par, Phase 2/3/4 te phase na pehla prashna pehla; intro pachhi first draw automatic.
+- **Logo splash** – player join kare tyare pehla logo + music, pachhi card.
+- **Phase name** – Host Dashboard, Projector ane Intro ma dekhay. Lobby ma "Phase name" boxes thi edit (default: આરંભ, મનન, સાધના, સિદ્ધિ).
+- **Colourful scratch card** – rainbow foil, colourful message ane save image.
+- **Premium Certificate** – rainbow frame, gold seal, logo watermark; Host Tools ma badhu edit thay, signature upload athva haath thi draw.
+
+---
+
 
 ## 🆕 Conclusion: 🃏 3×3 Card Draw + 🧩 Mystery Image (v2)
 - 🎰 **Personal Surprise** – દરેક Phase 1/2/3 પૂરો થતાં દરેક Player પોતે 1 Surprise Card ખોલે (×2 Points · 🛡 No Minus · ⚡ Fast +3). એ ફક્ત **પછીના Phase ના 9 પ્રશ્ન** પર લાગુ પડે (Phase 1→2, 2→3, 3→4).
