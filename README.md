@@ -1,3 +1,15 @@
+# ✨ Update 2 (Special Card Round · Colour Studio · Game name)
+
+**Upload:** `server.js`, `host.html`, `player.html`, `logo.png`.
+
+- **Special Card Round:** Game Start par pehla darek player 10 sec ma 4 face-down cards ma thi ek select kare. Time pura thay pachhi Projector par "✨ SPECIAL CARDS REVEAL" button (Host Dashboard ma pan che). Reveal pachhi j player na phone ma card dekhay ane te badha 4 Phase ma lagu pade. Pachhi "▶ PHASE 1 શરૂ કરો" thi Phase 1 Intro.
+- **Colour Studio (🎨 button):** premium presets + RGB sliders + #HEX code. Game colour (Host + Players) ane Projector background (glow + base) alag badlay. Players par live sync.
+- **Game nu Title / Subtitle:** Lobby ma "Game નું નામ" thi edit — Host, Projector, Players, Certificate, Cards, Report ma badhe badlay.
+- **Projector:** upar "જ્ઞાન શોધ" kadhi nakhyu; Phase nu premium name dekhay.
+- **Grid:** draw thay tyare puzzle grid na colours dim/change thata nathi.
+
+---
+
 # ✨ Latest update (Phase intro · Logo splash · Premium certificate)
 
 **Upload karvani files:** `server.js`, `host.html`, `player.html`, `logo.png` (navi file).

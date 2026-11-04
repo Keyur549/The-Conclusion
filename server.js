@@ -211,6 +211,10 @@ function puzLive(room,p){
   return {done,got,cnt,keys};
 }
 // ---------- 🎰 Phase Surprise (personal) + 🗝 Keys / Final Vault ----------
+const SP_SEC=10;
+const GT_DEF='જ્ઞાન શોધ', GS_DEF='THE CONCLUSION';
+function cleanTxt(v,d){ v=String(v==null?'':v).replace(/[<>]/g,'').trim().slice(0,40); return v||d; }
+function cleanTheme2(t){ if(!t||typeof t!=='object') return null; const hx=v=>{ v=String(v||'').trim(); return /^#[0-9a-fA-F]{6}$/.test(v)?v.toLowerCase():''; }; const o={p:hx(t.p),pb:hx(t.pb),pg:hx(t.pg)}; return (o.p||o.pb||o.pg)?o:null; }
 const VAULT_PTS=[0,2,5,10,20], KEY_NEED=4, SURP_TYPES=['x2','safe','fast','pen'];
 function pickSurp(){ return SURP_TYPES[Math.floor(Math.random()*SURP_TYPES.length)]; }
 // A surprise drawn at the end of phase k-1 applies to ALL 9 questions of phase k (index k = 1..3) — and to no other phase.
@@ -219,7 +223,7 @@ function surpVault(room,p,pname,cellState,fm,shieldSaved){
   Object.entries(p.marks||{}).forEach(([ci,qi])=>{ const pos=qPos(room,qi); if(pos<0) return; const k=Math.floor(pos/PHASE_LEN); if(k>3) return; const st=cellState[+ci]; if(st==='green') cor[k]++; else if(st==='red') red[k]++; });
   const keys=cor.map(c=>c>=KEY_NEED), nKeys=keys.filter(Boolean).length;
   let surpPts=0; const surpRes=[];
-  for(let k=1;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
+  for(let k=0;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
     if(t==='x2') pts=cor[k];
     else if(t==='safe'){ pts=red[k]; const sq=(p.cards||{}).shield; if(shieldSaved && sq!=null && Math.floor(qPos(room,sq)/PHASE_LEN)===k) pts-=1; }
     else if(t==='pen') pts=-3*red[k];
@@ -548,20 +552,34 @@ io.on('connection', (socket) => {
     cb && cb({ok: id===HOST_ID && pw===HOST_PW});
   });
 
-  socket.on('host:create', ({hostName, maxPlayers, qaText, phaseNames}, cb) => {
+  socket.on('host:create', ({hostName, maxPlayers, qaText, phaseNames, gTitle, gSub, theme}, cb) => {
     const code = randCode();
     const parsed = parseQA(qaText);
     rooms[code] = {
       code, hostName, maxPlayers: maxPlayers||null, status:'lobby',
       questions: parsed.questions, usedIdx:[], curIdx:null, timerEnd:null,
-      players:{}, winners:null, revealStep:0, createdAt: Date.now(), phaseNames: cleanPhaseNames(phaseNames)
+      players:{}, winners:null, revealStep:0, createdAt: Date.now(), phaseNames: cleanPhaseNames(phaseNames),
+      gTitle: cleanTxt(gTitle,GT_DEF), gSub: cleanTxt(gSub,GS_DEF), theme: cleanTheme2(theme)
     };
     socket.join(code);
     cb && cb({ok:true, code, parseInfo:{count:parsed.questions.length, bad:parsed.bad, usedDefault:parsed.usedDefault}});
     broadcast(code);
   });
 
-  socket.on('host:start', ({code}) => { const r=rooms[code]; if(!r) return; r.joinEnd=null; if(!r.botsPlay) for(const k of Object.keys(r.players)) if(r.players[k].bot) delete r.players[k]; r.status='active'; if(!r.startedAt) r.startedAt=Date.now(); r.introPh=0; startPhaseIntro(r,code,0,false); });
+  socket.on('host:start', ({code}) => { const r=rooms[code]; if(!r) return; r.joinEnd=null; if(!r.botsPlay) for(const k of Object.keys(r.players)) if(r.players[k].bot) delete r.players[k]; r.status='active'; if(!r.startedAt) r.startedAt=Date.now(); r.introPh=0;
+    if(r.sp && r.sp.stage==='done'){ startPhaseIntro(r,code,0,false); return; }
+    startSpecial(r,code); });
+  // 🎴 Special Card Round: every player picks ONE face-down card (10 s) BEFORE Phase 1; the host reveals them on the projector; the special applies to all 4 phases.
+  function startSpecial(r,code){ const now=Date.now(); r.sp={stage:'pick',at:now,end:now+SP_SEC*1000}; for(const p of Object.values(r.players)){ delete p.spPick; } broadcast(code);
+    setTimeout(()=>{ const rr=rooms[code]; if(rr&&rr.sp&&rr.sp.stage==='pick'&&rr.sp.at===now){ rr.sp.stage='wait'; broadcast(code); } }, SP_SEC*1000+300); }
+  socket.on('player:spPick', ({code,name,i}, cb) => { seen(code,name); const r=rooms[code]; const p=r&&r.players[name]; i=+i;
+    if(!r||!p||!r.sp||r.sp.stage!=='pick'||Date.now()>r.sp.end+800||!(i>=0&&i<4)) return cb&&cb({ok:false}); p.spPick=i; broadcast(code); cb&&cb({ok:true}); });
+  socket.on('host:spReveal', ({code}) => { const r=rooms[code]; if(!r||!r.sp||!(r.sp.stage==='wait'||(r.sp.stage==='pick'&&Date.now()>r.sp.end))) return;
+    for(const p of Object.values(r.players)){ const t=pickSurp(); p.spType=t; if(p.spPick==null) p.spPick=Math.floor(Math.random()*4); p.surp={0:t,1:t,2:t,3:t}; p.surpOpen={0:true,1:true,2:true,3:true}; }
+    r.sp.stage='reveal'; r.sp.revAt=Date.now(); broadcast(code); });
+  socket.on('host:spGo', ({code}) => { const r=rooms[code]; if(!r||!r.sp||r.sp.stage!=='reveal') return; r.sp.stage='done'; r.introPh=0; startPhaseIntro(r,code,0,false); });
+  socket.on('host:setNames', ({code,gTitle,gSub}, cb) => { const r=rooms[code]; if(!r){ cb&&cb({ok:false}); return; } r.gTitle=cleanTxt(gTitle,GT_DEF); r.gSub=cleanTxt(gSub,GS_DEF); broadcast(code); cb&&cb({ok:true}); });
+  socket.on('host:setTheme', ({code,theme}, cb) => { const r=rooms[code]; if(!r){ cb&&cb({ok:false}); return; } r.theme=cleanTheme2(theme); broadcast(code); cb&&cb({ok:true}); });
 
   // 🎬 Phase Intro: plays on every player's phone and on the host/projector at the start of each of the 4 phases
   function startPhaseIntro(r,code,k,auto){
@@ -576,6 +594,7 @@ io.on('connection', (socket) => {
     const r = rooms[code]; if(!r) return;
     if(r.status!=='active' && r.status!=='locked') return;
     if(r.introEnd && Date.now()<r.introEnd) return;   // Phase Intro is playing
+    if(r.sp && r.sp.stage!=='done') return;            // Special Card Round not finished
     const _n0=r.usedIdx.length; if(_n0%PHASE_LEN===0 && Math.floor(_n0/PHASE_LEN)<4 && r.introPh!==Math.floor(_n0/PHASE_LEN)){ r.introPh=Math.floor(_n0/PHASE_LEN); startPhaseIntro(r,code,r.introPh,true); return; }
     doSpin(code);
   });
@@ -587,7 +606,6 @@ io.on('connection', (socket) => {
     const _P=ensurePools(r), _k=Math.floor(r.usedIdx.length/PHASE_LEN), _c=(_P[_k]||[]).filter(i=>avail.includes(i));
     const _src=_c.length?_c:avail;   // draw from the current phase's own 9 questions
     const idx = _src[Math.floor(Math.random()*_src.length)];
-    { const _n=r.usedIdx.length; if(_n>0 && _n%PHASE_LEN===0 && _n/PHASE_LEN<=3){ const _k=_n/PHASE_LEN; for(const _p of Object.values(r.players)){ _p.surp=_p.surp||{}; if(!_p.surp[_k]) _p.surp[_k]=pickSurp(); } } }
     r.status='spinning'; r.curIdx=idx; r.usedIdx=[...r.usedIdx, idx]; r.timerEnd=null; r.paused=false; r.pausedMs=null; r.lastSpinAt=Date.now();
     broadcast(code);
     // Safety net only: if the host's own wheel never confirms completion (tab closed, crash, etc.),
@@ -714,6 +732,7 @@ io.on('connection', (socket) => {
       key = `${name} (${n})`;
     }
     r.players[key] = newPlayerObj(r,name,zone,avatar);
+    if(r.sp&&(r.sp.stage==='reveal'||r.sp.stage==='done')){ const _t=pickSurp(),_p=r.players[key]; _p.spType=_t; _p.spPick=0; _p.surp={0:_t,1:_t,2:_t,3:_t}; _p.surpOpen={0:true,1:true,2:true,3:true}; }
     if(clientId) r.clientMap[clientId] = key;
     socket.join(code); bindSock(socket, r, code, key);
     const S1 = slimBase(r);
