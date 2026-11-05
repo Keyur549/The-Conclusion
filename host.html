@@ -3097,22 +3097,38 @@ function ccApplyTheme(t){ try{ var st=document.documentElement.style,dark=window
  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 /* ---- render wrapper: Special round controls + game name card ---- */
+ (function(){
+  function init(){ var w=document.createElement('div'); w.id='hedt'; w.innerHTML='<button type="button" aria-label="Edit">✏️</button><div class="edp"></div>'; document.body.appendChild(w);
+   var pn=w.querySelector('.edp'),btn=w.querySelector('button');
+   var ee=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+   pn.innerHTML='<div class="cs-h"><b>✏️ Edit — Game ના Message</b><button class="cs-x" type="button">✕</button></div><div class="muted" style="font-size:.8rem;margin-bottom:6px">Title / Subtitle akhi game ma badlay. Phase Message = Phase pura thay tyare projector par image sathe dekhay (jem ke "દીવાની રોશની"). Game daramyan pan badli shakay.</div><label class="ed-l">Title</label><input id="gnt" type="text" maxlength="40"><label class="ed-l">Subtitle</label><input id="gns" type="text" maxlength="40"><div class="ed-l" style="margin-top:8px">💬 Phase Message</div>'+[0,1,2,3].map(function(i){return '<div class="ed-r"><b>Phase '+(i+1)+'</b><input id="pcm'+i+'" type="text" maxlength="60"></div>';}).join('')+'<div class="ed-l" style="margin-top:8px">🏷 Phase નાં નામ</div>'+[0,1,2,3].map(function(i){return '<div class="ed-r"><b>Phase '+(i+1)+'</b><input id="pnm'+i+'" type="text" maxlength="30"></div>';}).join('')+'<button type="button" class="cs-rs" id="edsave" style="margin-top:10px">✅ Save</button><span id="edok" class="muted" style="margin-left:8px"></span>';
+   btn.onclick=function(){ pn.classList.toggle('open'); if(pn.classList.contains('open')) fill(true); };
+   pn.querySelector('.cs-x').onclick=function(){ pn.classList.remove('open'); };
+   pn.querySelector('#edsave').onclick=function(){ try{ hostNames(); hostCaps(); var v=[0,1,2,3].map(function(i){return pn.querySelector('#pnm'+i).value}); try{localStorage.setItem('ccPhaseNames',JSON.stringify(v))}catch(e){} socket.emit('host:setPhaseNames',{code:state.code,phaseNames:v}); pn.querySelector('#edok').textContent='✅ Saved'; setTimeout(function(){pn.querySelector('#edok').textContent=''},1800); }catch(e){} };
+   function fill(force){ try{ var r=state.room; if(!r) return; var set=function(id,v){ var e=pn.querySelector('#'+id); if(e&&(force||document.activeElement!==e)&&e.value!==v&&!pn.contains(document.activeElement)) e.value=v; }; set('gnt',GT()); set('gns',GS()); for(var i=0;i<4;i++){ set('pcm'+i,pgCapOf(r,i)); set('pnm'+i,PNAME(r,i)); } }catch(e){} }
+   setInterval(function(){ if(!pn.classList.contains('open')) return; fill(false); },1500); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+ })();
 function hostNames(){ var t=document.getElementById('gnt'),s=document.getElementById('gns'); try{ localStorage.setItem('ccNames',JSON.stringify([t.value,s.value])); }catch(e){} socket.emit('host:setNames',{code:state.code,gTitle:t.value,gSub:s.value}); }
 (function(){
  var _r2=render;
  render=function(){ _r2.apply(this,arguments);
-  try{ var r=state.room,app=document.getElementById('app'); ['spctl','gncard'].forEach(function(i){ var o=document.getElementById(i); if(o) o.remove(); });
+  try{ var r=state.room,app=document.getElementById('app'); ['spctl','gncard','pcmcard'].forEach(function(i){ var o=document.getElementById(i); if(o) o.remove(); });
    if(state.code&&r&&app){
     if((r.status==='active'||r.status==='locked')&&r.sp&&r.sp.stage!=='done'){ var d=document.createElement('div'); d.innerHTML=spCtl(r); app.insertBefore(d.firstChild,app.firstChild); }
-    if(r.status==='lobby'){ var g=document.createElement('div'); g.id='gncard'; g.className='card'; var e=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
-     g.innerHTML='<h2 style="margin:0 0 4px">✏️ Game નું નામ</h2><div class="muted" style="margin-bottom:8px">Title ane Subtitle akhi game ma (Host, Projector, Players, Certificate, Cards) badlay.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="gnt" type="text" maxlength="40" value="'+e(GT())+'" placeholder="Title" style="flex:2 1 160px" onchange="hostNames()"><input id="gns" type="text" maxlength="40" value="'+e(GS())+'" placeholder="Subtitle" style="flex:1 1 120px" onchange="hostNames()"></div>';
-     var ph=app.querySelector('.card'); app.insertBefore(g,app.firstChild); } } }catch(e){} };
+     } }catch(e){} };
  var _e2=socket.emit.bind(socket);
  socket.emit=function(ev,data){ if(ev==='host:create'&&data&&typeof data==='object'){ try{ var n=JSON.parse(localStorage.getItem('ccNames')||'null'); if(n&&n.length===2){ data.gTitle=n[0]; data.gSub=n[1]; } }catch(e){} try{ var t=window.ccHostTheme&&window.ccHostTheme(); if(t) data.theme=t; }catch(e){} } return _e2.apply(null,arguments); };
+ function hostCaps(){ ['phase1','phase2','phase3','phase4'].forEach(function(k,i){ var e=document.getElementById('pcm'+i); if(e) socket.emit('host:setPzCap',{code:state.code,key:k,text:e.value}); }); }
+ window.hostCaps=hostCaps;
  setInterval(function(){ try{ if(state.room){ document.title='Host — '+GT()+' · '+GS(); } }catch(e){} },1000);
 })();
 </script>
 <style id="up-host2-css">
+#hedt{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:70}
+#hedt>button{width:46px;height:46px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#06b6d4,#6366f1);color:#fff;font-size:1.2rem;box-shadow:0 6px 18px rgba(99,102,241,.45);cursor:pointer}
+#hedt .edp{display:none;position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + 56px);width:min(360px,calc(100vw - 24px));max-height:75vh;overflow:auto;background:var(--card,#fff);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.35);padding:14px}
+#hedt .edp.open{display:block}.ed-l{font-weight:800;font-size:.85rem;margin:6px 0 2px}.ed-r{display:flex;gap:6px;align-items:center;margin:3px 0}.ed-r b{min-width:62px;font-size:.8rem}.ed-r input,#hedt .edp>input{flex:1;width:100%;box-sizing:border-box;padding:7px;border-radius:8px}
 .pzall{margin-top:1vh;max-width:min(900px,92vw)}.pzall b{display:block;color:#fde68a;font-size:clamp(1rem,2.6vh,1.6rem);margin-bottom:.6vh}.pzall div{display:flex;flex-wrap:wrap;gap:.8vh 1.4vh;justify-content:center}.pzall span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:.4vh 1.6vh;font-weight:800;font-size:clamp(.85rem,2.2vh,1.3rem)}
 .pgc.on.old,.pgx .pgc.on.old{opacity:1!important;filter:none!important}
 .pgc.on.fresh{animation:none!important}
@@ -3137,6 +3153,24 @@ function hostNames(){ var t=document.getElementById('gnt'),s=document.getElement
 .cs-t{display:flex;gap:8px;align-items:center;margin-bottom:4px}.cs-pk{width:46px;height:36px;padding:0;border:0;background:none;cursor:pointer}.cs-hx{flex:1;font-family:monospace;text-transform:lowercase;padding:7px;border-radius:8px}.cs-hx.bad{border-color:#dc2626!important}
 .cs-s{display:flex;align-items:center;gap:6px;font-size:.78rem}.cs-s b{width:14px}.cs-s input{flex:1;accent-color:var(--p)}.cs-s.R input{accent-color:#ef4444}.cs-s.G input{accent-color:#22c55e}.cs-s.B input{accent-color:#3b82f6}.cs-s output{width:28px;text-align:right;font-variant-numeric:tabular-nums}
 .cs-f{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px}.cs-rs{align-self:flex-start;border:1.5px solid var(--pl);background:none;border-radius:10px;padding:6px 12px;font-weight:800;color:var(--pdd);cursor:pointer}
+</style>
+<style id="up-rainbow">
+:root{--rb:linear-gradient(120deg,#f43f5e,#f59e0b,#eab308,#22c55e,#06b6d4,#6366f1,#d946ef)}
+body{background-image:radial-gradient(700px 380px at 0% 0%,rgba(244,63,94,.16),transparent 70%),radial-gradient(700px 380px at 100% 12%,rgba(6,182,212,.16),transparent 70%),radial-gradient(800px 420px at 50% 100%,rgba(234,179,8,.15),transparent 70%)!important;background-attachment:fixed!important}
+.card{background:linear-gradient(var(--card),var(--card)) padding-box,var(--rb) border-box!important;border:2px solid transparent!important;box-shadow:0 8px 24px rgba(99,102,241,.14)!important}
+h1,h2{background:var(--rb);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
+.btn:not(.ghost):not(.secondary){background:linear-gradient(135deg,#f43f5e,#f59e0b)!important;color:#fff!important}
+.btn:not(.ghost):not(.secondary):nth-of-type(2n){background:linear-gradient(135deg,#06b6d4,#6366f1)!important}
+.btn:not(.ghost):not(.secondary):nth-of-type(3n){background:linear-gradient(135deg,#22c55e,#06b6d4)!important}
+.btn.secondary{background:linear-gradient(135deg,#fde047,#f97316)!important}
+.cell:not(.marked):not(.green):not(.red):nth-child(5n+1){background:linear-gradient(145deg,#ffe4e6,#fecdd3)}
+.cell:not(.marked):not(.green):not(.red):nth-child(5n+2){background:linear-gradient(145deg,#fef3c7,#fde68a)}
+.cell:not(.marked):not(.green):not(.red):nth-child(5n+3){background:linear-gradient(145deg,#dcfce7,#bbf7d0)}
+.cell:not(.marked):not(.green):not(.red):nth-child(5n+4){background:linear-gradient(145deg,#cffafe,#a5f3fc)}
+.cell:not(.marked):not(.green):not(.red):nth-child(5n+5){background:linear-gradient(145deg,#ede9fe,#ddd6fe)}
+.cell:not(.marked):not(.green):not(.red){color:#1e1b4b}
+.pzchip{background:linear-gradient(135deg,#e0e7ff,#fae8ff)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .card{background:linear-gradient(var(--card),var(--card)) padding-box,var(--rb) border-box!important}}
 </style>
 </body>
 </html>
