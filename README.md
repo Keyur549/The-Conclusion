@@ -10,6 +10,7 @@
 - **Player Mystery Image (Reveal):** player na phone ma tukda clean thay ane gap vagar jodai jay.
 - **Colourful look:** rainbow card borders, colourful headings/buttons ane card cells (Host + Player).
 - **✏️ Edit panel (Host, niche-dabi):** Title/Subtitle, Phase Message ("દીવાની રોશની" jevo) ane Phase na naam game daramyan pan edit karo.
+- **Sync:** server-clock sync — Host ane badha Players no timer / number reveal ek j time par chale.
 - **Grid:** draw thay tyare puzzle grid na colours dim/change thata nathi.
 
 ---

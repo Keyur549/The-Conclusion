@@ -1883,7 +1883,7 @@ function gridDraw(r){
     at(5100,()=>{ each(o=>{ const xr=o.x.getBoundingClientRect(), cr=o.cell.getBoundingClientRect();
         const dx=(cr.left+cr.width/2)-(xr.left+xr.width/2), dy=(cr.top+cr.height/2)-(xr.top+xr.height/2), sc=cr.width/o.S;
         o.f.classList.add('go'); o.f.style.transform='translate('+dx+'px,'+dy+'px) scale('+sc+')'; }); });
-    at(6250,()=>{ GA={idx,landed:true}; document.querySelectorAll('.pgwrap').forEach(w=>{ w.outerHTML=drawStage(r); }); try{ playTick(); }catch(e){} });
+    at(6250,()=>{ try{ socket.emit('host:spinComplete',{code:state.code, idx}); }catch(e){} GA={idx,landed:true}; document.querySelectorAll('.pgwrap').forEach(w=>{ w.outerHTML=drawStage(r); }); try{ playTick(); }catch(e){} });
     at(6750,()=>{ if(!spinning) return; GA={idx:null,landed:false}; spinning=false; render(); socket.emit('host:spinComplete',{code:state.code, idx}); });
   });
 }
@@ -3168,5 +3168,19 @@ h1,h2{background:var(--rb);-webkit-background-clip:text;background-clip:text;-we
 .pzchip{background:linear-gradient(135deg,#e0e7ff,#fae8ff)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .card:not(.numpop):not(.big-winner):not([style*="background"]):not([style*="border"]){background:linear-gradient(var(--card),var(--card)) padding-box,var(--rb) border-box!important}}
 </style>
+<script id="up-clock">
+/* Server-clock sync: every phone/laptop uses the SAME clock (server time), so timers & number reveal match exactly */
+(function(){
+  var RAW=Date.now.bind(Date),SK=0,best=1e9,n=0;
+  Date.now=function(){ return RAW()+SK; };
+  window.__srvSkew=function(){ return SK; };
+  function sample(){ try{ var t0=RAW(); socket.emit('time:sync',null,function(st){ if(typeof st!=='number') return; var t1=RAW(),rtt=t1-t0,off=st+rtt/2-t1;
+      if(n<6||rtt<=best*1.5+30){ if(rtt<best) best=rtt; SK=(n<3)?off:Math.round(SK*.5+off*.5); n++; } }); }catch(e){} }
+  function burst(){ best=1e9; n=0; for(var i=0;i<6;i++) setTimeout(sample,i*250); }
+  try{ socket.on('connect',burst); if(socket.connected) burst(); }catch(e){}
+  setInterval(sample,20000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) burst(); });
+})();
+</script>
 </body>
 </html>
