@@ -2431,6 +2431,8 @@ function surpVault(room,p,pname,cellState,fm,shieldSaved){
   let surpPts=0; const surpRes=[];
   for(let k=0;k<=3;k++){ const t=(p.surp||{})[k]; if(!t) continue; let pts=0;
     if(t==='x2') pts=cor[k];
+    else if(t==='x3') pts=2*cor[k];
+    else if(t==='m2') pts=-red[k];
     else if(t==='safe'){ pts=red[k]; const sq=(p.cards||{}).shield; if(shieldSaved && sq!=null && Math.floor(qPos(room,sq)/PHASE_LEN)===k) pts-=1; }
     else if(t==='pen') pts=-3*red[k];
     else if(t==='fast') (room.usedIdx||[]).forEach((qi,pos)=>{ if(Math.floor(pos/PHASE_LEN)===k && fm && fm[qi]===pname) pts+=3; });
@@ -2705,7 +2707,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   if(w[k+'_score']!=null)o+=(o?' · ':'')+'🎯 Score '+esc2(w[k+'_score']);
   if(ts){try{o+=(o?' · ':'')+'🕒 '+new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch(e){}}
   return (o||tie)?'<div class="pjclaim">'+o+(tie?'<small>⚖️ Tie-break: '+esc2(tie===true?'સૌથી પહેલા Claim':tie)+'</small>':'')+'</div>':''}
- function html(r){if(r.status==='active'&&r.sp&&r.sp.stage!=='done'&&typeof spPJ==='function')return spPJ(r);var h=html_(r);try{var fin=isFinale(r),po=document.getElementById('pj');if(po)po.classList.toggle('pjfinale',fin);if(fin&&r.status==='question')h=h.replace('<div class="pjh">','<div class="pjfin">🔥 FINAL PHASE — છેલ્લો Phase! 🔥</div><div class="pjh">');var st=r.status;if(['active','spinning','revealing','question','locked'].indexOf(st)>=0)h=h.replace(/<div class="pjh">[^<]*<\/div>/,function(m){return m+PBADGE(r,st==='question'||st==='locked')});if(['active','spinning','revealing','question','locked','box','ended'].indexOf(st)>=0)h+='<div class="pzth"><div class="pzbl" style="--im:url(/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0)+')"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq" style="font-size:2rem">?</div></div>🧩 Mystery Image</div>'}catch(e){}return h}
+ function html(r){if((r.status==='active'||r.status==='locked')&&r.sp&&r.sp.stage!=='done'&&typeof spPJ==='function')return spPJ(r);var h=html_(r);try{var fin=isFinale(r),po=document.getElementById('pj');if(po)po.classList.toggle('pjfinale',fin);if(fin&&r.status==='question')h=h.replace('<div class="pjh">','<div class="pjfin">🔥 FINAL PHASE — છેલ્લો Phase! 🔥</div><div class="pjh">');var st=r.status;if(['active','spinning','revealing','question','locked'].indexOf(st)>=0)h=h.replace(/<div class="pjh">[^<]*<\/div>/,function(m){return m+PBADGE(r,st==='question'||st==='locked')});if(['active','spinning','revealing','question','locked','box','ended'].indexOf(st)>=0)h+='<div class="pzth"><div class="pzbl" style="--im:url(/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0)+')"><div class="pzgr">'+'<b></b>'.repeat(16)+'</div><div class="pzq" style="font-size:2rem">?</div></div>🧩 Mystery Image</div>'}catch(e){}return h}
  function html_(r){var st=r.status;
   if(st==='active'||st==='spinning'||st==='revealing'||st==='locked'){
    var fastB=(st==='revealing'&&r.betEnd&&isFastQ(r,r.curIdx)),pdn=(st==='locked'&&phaseDone(r)),betN=fastB?Object.values(r.players||{}).filter(function(x){return x.bets&&x.bets[r.curIdx]}).length:0,betL=fastB?Math.max(0,Math.ceil((r.betEnd-Date.now())/1000)):0;
@@ -3047,16 +3049,16 @@ function GT(){ try{ return (state.room&&state.room.gTitle)||'જ્ઞાન શ
 function GS(){ try{ return (state.room&&state.room.gSub)||'THE CONCLUSION'; }catch(e){ return 'THE CONCLUSION'; } }
 function spReveal(){ socket.emit('host:spReveal',{code:state.code}); }
 function spGo(){ socket.emit('host:spGo',{code:state.code}); }
-var SPT={x2:['✖2','ડબલ Points'],safe:['🛡','No Minus'],pen:['💀','Danger −4'],fast:['⚡','Fast +3']};
+var SPT={x3:['✖3','ટ્રિપલ Points'],m2:['➖','Minus −2'],x2:['✖2','ડબલ Points'],safe:['🛡','No Minus'],pen:['💀','Danger −4'],fast:['⚡','Fast +3']};
 function spPJ(r){ var sp=r.sp,P=Object.values(r.players||{}),n=P.length,pk=P.filter(function(p){return p.spPick!=null}).length,rem=Math.max(0,Math.ceil(((sp.end||0)-Date.now())/1000)),st=sp.stage,o='';
-  o+='<img class="pjlogo" src="logo.png" alt=""><div class="spj-h">🎴 SPECIAL CARD ROUND</div>';
+  o+='<img class="pjlogo" src="logo.png" alt=""><div class="spj-h">🎴 SPECIAL CARD ROUND</div><div class="pjchip">PHASE '+((sp.k||0)+1)+' / 4 · '+String(PNAME(r,sp.k||0)).replace(/</g,'&lt;')+'</div>';
   if(st==='pick'){ o+='<div class="pjs">દરેક Player 4 માંથી એક Special Card પસંદ કરે છે</div><div class="pjt'+(rem<=3?' lo':'')+'">'+rem+'</div><div class="spj-cards">'+[0,1,2,3].map(function(i){return '<div class="spj-c c'+i+'">🎁</div>'}).join('')+'</div><div class="pjchip">✅ '+pk+' / '+n+' Players એ પસંદ કર્યું</div>'; }
   else if(st==='wait'){ o+='<div class="pjs">સમય પૂરો — '+pk+' / '+n+' Players એ card પસંદ કર્યું</div><div class="spj-cards">'+[0,1,2,3].map(function(i){return '<div class="spj-c c'+i+'">🎁</div>'}).join('')+'</div><button class="spj-b" onclick="spReveal()">✨ SPECIAL CARDS REVEAL કરો</button>'; }
-  else { var cnt={x2:0,safe:0,pen:0,fast:0}; P.forEach(function(p){ if(p.spType&&cnt[p.spType]!=null) cnt[p.spType]++; });
-    o+='<div class="pjs">બધા Players ના Special Card — બધા 4 Phase માં લાગુ</div><div class="spj-cards rv">'+['x2','safe','fast','pen'].map(function(k,i){return '<div class="spj-c c'+i+' rev" style="animation-delay:'+(i*.18)+'s"><div class="em">'+SPT[k][0]+'</div><b>'+SPT[k][1]+'</b><span>'+cnt[k]+' Players</span></div>'}).join('')+'</div><button class="spj-b" onclick="spGo()">▶ PHASE 1 શરૂ કરો</button>'; }
+  else { var cnt={x2:0,x3:0,m2:0,safe:0,pen:0,fast:0}; P.forEach(function(p){ if(p.spType&&cnt[p.spType]!=null) cnt[p.spType]++; });
+    o+='<div class="pjs">PHASE '+((sp.k||0)+1)+' — બધા Players ના Special Card</div><div class="spj-cards rv">'+['x2','x3','m2','pen'].map(function(k,i){return '<div class="spj-c c'+i+' rev" style="animation-delay:'+(i*.18)+'s"><div class="em">'+SPT[k][0]+'</div><b>'+SPT[k][1]+'</b><span>'+cnt[k]+' Players</span></div>'}).join('')+'</div><button class="spj-b" onclick="spGo()">▶ PHASE '+((sp.k||0)+1)+' શરૂ કરો</button>'; }
   return o; }
 function spCtl(r){ var sp=r.sp,st=sp.stage,P=Object.values(r.players||{}),pk=P.filter(function(p){return p.spPick!=null}).length;
-  return '<div class="card" id="spctl" style="text-align:center;border:2px solid #d63dbb"><div style="font-weight:900;font-size:1.05rem">🎴 Special Card Round</div><div class="muted">'+(st==='pick'?'Players card પસંદ કરી રહ્યા છે (10 sec) · '+pk+'/'+P.length:st==='wait'?'સમય પૂરો · '+pk+'/'+P.length+' એ પસંદ કર્યું — હવે Reveal કરો (Projector પર પણ બટન છે)':'Cards Reveal થઈ ગયા — Phase 1 શરૂ કરો')+'</div>'+(st==='wait'?'<button class="btn" onclick="spReveal()">✨ Special Cards Reveal</button>':st==='reveal'?'<button class="btn" onclick="spGo()">▶ Phase 1 શરૂ કરો</button>':'')+'</div>'; }
+  return '<div class="card" id="spctl" style="text-align:center;border:2px solid #d63dbb"><div style="font-weight:900;font-size:1.05rem">🎴 Special Card Round · Phase '+((sp.k||0)+1)+'</div><div class="muted">'+(st==='pick'?'Players card પસંદ કરી રહ્યા છે (10 sec) · '+pk+'/'+P.length:st==='wait'?'સમય પૂરો · '+pk+'/'+P.length+' એ પસંદ કર્યું — હવે Reveal કરો (Projector પર પણ બટન છે)':'Cards Reveal થઈ ગયા — Phase '+((sp.k||0)+1)+' શરૂ કરો')+'</div>'+(st==='wait'?'<button class="btn" onclick="spReveal()">✨ Special Cards Reveal</button>':st==='reveal'?'<button class="btn" onclick="spGo()">▶ Phase '+((sp.k||0)+1)+' શરૂ કરો</button>':'')+'</div>'; }
 /* ---- 🎨 Colour Studio ---- */
 function ccHsl(hex){ var r=parseInt(hex.substr(1,2),16)/255,g=parseInt(hex.substr(3,2),16)/255,b=parseInt(hex.substr(5,2),16)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,h=0,s=0,d=mx-mn; if(d){ s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4); h*=60; } return [Math.round(h),Math.round(s*100),Math.round(l*100)]; }
 function ccThemeVars(hex){ var a=ccHsl(hex),h=a[0],s=Math.max(45,a[1]),L=Math.min(52,Math.max(30,a[2])),r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16),H=function(x,y,z){return 'hsl('+h+','+x+'%,'+y+'%)'};
@@ -3100,7 +3102,7 @@ function hostNames(){ var t=document.getElementById('gnt'),s=document.getElement
  render=function(){ _r2.apply(this,arguments);
   try{ var r=state.room,app=document.getElementById('app'); ['spctl','gncard'].forEach(function(i){ var o=document.getElementById(i); if(o) o.remove(); });
    if(state.code&&r&&app){
-    if(r.status==='active'&&r.sp&&r.sp.stage!=='done'){ var d=document.createElement('div'); d.innerHTML=spCtl(r); app.insertBefore(d.firstChild,app.firstChild); }
+    if((r.status==='active'||r.status==='locked')&&r.sp&&r.sp.stage!=='done'){ var d=document.createElement('div'); d.innerHTML=spCtl(r); app.insertBefore(d.firstChild,app.firstChild); }
     if(r.status==='lobby'){ var g=document.createElement('div'); g.id='gncard'; g.className='card'; var e=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
      g.innerHTML='<h2 style="margin:0 0 4px">✏️ Game નું નામ</h2><div class="muted" style="margin-bottom:8px">Title ane Subtitle akhi game ma (Host, Projector, Players, Certificate, Cards) badlay.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="gnt" type="text" maxlength="40" value="'+e(GT())+'" placeholder="Title" style="flex:2 1 160px" onchange="hostNames()"><input id="gns" type="text" maxlength="40" value="'+e(GS())+'" placeholder="Subtitle" style="flex:1 1 120px" onchange="hostNames()"></div>';
      var ph=app.querySelector('.card'); app.insertBefore(g,app.firstChild); } } }catch(e){} };
