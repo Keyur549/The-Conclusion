@@ -477,7 +477,7 @@ function puzBoxHTML(r){
 function puzFinalHTML(r,p){
   const z=puzzleOf(r,p), s={}, im=puzImg(r); z.got.forEach(t=>s[t]=1);
   let h=''; for(let t=0;t<16;t++) h+=puzTile(t,!!s[t],im);
-  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image — તમારા ટુકડા '+z.count+'/16</div><div class="pzfin">'+h+'</div>'+(z.complete?'<div style="text-align:center;font-weight:800;color:#15803d;margin-top:6px">🎉 ચિત્ર પૂરું થયું!</div>':'<div class="muted" style="text-align:center;margin-top:6px">ચિત્ર પૂરું કરવા દરેક Phase ના 4 સાચા જવાબ જોઈએ.</div>')+'</div>';
+  return '<div class="card pzcard"><div style="font-weight:800;text-align:center">🧩 Mystery Image — તમારા ટુકડા '+z.count+'/16</div><div class="pzfin pzjoin">'+h+'</div>'+(z.complete?'<div style="text-align:center;font-weight:800;color:#15803d;margin-top:6px">🎉 ચિત્ર પૂરું થયું!</div>':'<div class="muted" style="text-align:center;margin-top:6px">ચિત્ર પૂરું કરવા દરેક Phase ના 4 સાચા જવાબ જોઈએ.</div>')+'</div>';
 }
 function phaseDone(r){ const n=(r.usedIdx||[]).length; return n>0 && n%PHASE_LEN===0 && n<(r.questions||[]).length; }
 function phLabel(r){ const x=phaseInfo(r); return x.fast?('⚡ FAST ROUND · PHASE '+x.ph):('PHASE '+x.ph+' · પ્રશ્ન '+qNo(r,r.curIdx)); }
@@ -1391,6 +1391,13 @@ setInterval(function(){ try{ spOverlay(); ccApplyTheme(state.room&&state.room.th
 #spround .spc .fr .em{font-size:1.8rem}
 #spround .spc .fr b{font-size:.78rem}
 #spround .sp-m{font-weight:700;line-height:1.6;margin-top:10px}
+</style>
+<style id="up-pzj">
+.pzfin.pzjoin{border-radius:12px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.25);animation:pzgap 1.3s .5s cubic-bezier(.3,.7,.2,1) both}
+.pzfin.pzjoin .pzt{border-radius:0;animation:pzclean 1.3s .5s both}
+.pzfin.pzjoin .pzt.lk{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+@keyframes pzgap{0%{gap:3px}100%{gap:0}}
+@keyframes pzclean{0%{filter:blur(6px) brightness(.9);transform:scale(.94)}100%{filter:none;transform:none}}
 </style>
 </body>
 </html>

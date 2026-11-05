@@ -6,6 +6,8 @@
 - **Colour Studio (🎨 button):** premium presets + RGB sliders + #HEX code. Game colour (Host + Players) ane Projector background (glow + base) alag badlay. Players par live sync.
 - **Game nu Title / Subtitle:** Lobby ma "Game નું નામ" thi edit — Host, Projector, Players, Certificate, Cards, Report ma badhe badlay.
 - **Projector:** upar "જ્ઞાન શોધ" kadhi nakhyu; Phase nu premium name dekhay.
+- **Zone winner:** projector par Average Score ane Total dekhay. **Mystery Image** ना end ma image complete karnar badha Players na naam dekhay.
+- **Player Mystery Image (Reveal):** player na phone ma tukda clean thay ane gap vagar jodai jay.
 - **Grid:** draw thay tyare puzzle grid na colours dim/change thata nathi.
 
 ---

@@ -2723,7 +2723,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
   if(st==='revealed'){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[],step=r.revealStep||0;
    if(step>=1&&step<=O.length){var k=O[step-1],nm=(r.winners||{})[k];
     if(k==='puzzle')h=h.replace('<div class="pjav">','<div class="pzimg" style="background-image:url(/pz/'+r.code+'/puzzle?v='+((r.pzV||{}).puzzle||0)+')"></div>'+(nm?claim(r,k):'')+'<div class="pjav">');
-    h=h.replace('class="pjw"','class="pjw pjgrand'+(k==='puzzle'&&nm?' pzrev':'')+'"')+(nm?(k==='puzzle'?'':claim(r,k))+(k==='puzzle'?'<div class="pzlate">':'')+'<div class="pjfw">🎉🎊🥳🎊🎉</div>'+conf(step*7+3)+(k==='puzzle'?'</div>':''):'')}
+    h=h.replace('class="pjw"','class="pjw pjgrand'+(k==='puzzle'&&nm?' pzrev':'')+'"')+(nm?(k==='puzzle'?'':claim(r,k))+(k==='puzzle'?'<div class="pzlate">'+pzAll(r):'')+'<div class="pjfw">🎉🎊🥳🎊🎉</div>'+conf(step*7+3)+(k==='puzzle'?'</div>':''):'')}
    else if(step>O.length)h+=conf(99)}
   return h+ctl(r)}
 
@@ -2747,7 +2747,7 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
    return head+'<div class="pjs">પ્રશ્ન '+n+(r.round!=null?' · Round '+((r.round||0)+1):'')+'</div><div class="pjq">'+esc2(twText(r,q.q||''))+'</div>'+(q.img?'<img class="pjimg" src="'+esc2(q.img)+'" onerror="this.style.display=\'none\'">':'')+'<div class="pjt'+(rem<=5&&st==='question'?' lo':'')+'">'+(st==='locked'?'⏹':(r.paused?'⏸ ':'')+rem)+'</div>'+bars(r)}
   if(st==='revealed'){var w=r.winners||{},step=r.revealStep||0,O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[];
    if(step>=1&&step<=O.length){var k=O[step-1],nm=w[k],isZ=(k==='zone'||k==='zonefull'),pd=(nm&&!isZ&&r.players)?r.players[nm]:null;
-    return head+'<div class="pjw"><div class="pjc">👑</div><div class="pjl">'+esc2((typeof WINNER_LABELS!=='undefined'&&WINNER_LABELS[k])||k)+'</div><div class="pjav">'+(isZ?(nm?'🏅':'❓'):(pd?avHTML(pd.avatar):'❓'))+'</div><div class="pjname">'+(nm?esc2(nm):'કોઈ Winner નથી')+'</div>'+(pd&&pd.zone?'<div class="pjzn">📍 '+esc2(pd.zone)+'</div>':'')+(w[k+'_score']!=null?'<div class="pjsc">🎯 '+w[k+'_score']+'</div>':'')+'</div>'}
+    return head+'<div class="pjw"><div class="pjc">👑</div><div class="pjl">'+esc2((typeof WINNER_LABELS!=='undefined'&&WINNER_LABELS[k])||k)+'</div><div class="pjav">'+(isZ?(nm?'🏅':'❓'):(pd?avHTML(pd.avatar):'❓'))+'</div><div class="pjname">'+(nm?esc2(nm):'કોઈ Winner નથી')+'</div>'+(pd&&pd.zone?'<div class="pjzn">📍 '+esc2(pd.zone)+'</div>':'')+(w[k+'_score']!=null?'<div class="pjsc">🎯 '+w[k+'_score']+'</div>':'')+(k==='zone'&&w.zone_avg!=null?'<div class="pjsc">📊 Average Score: '+w.zone_avg+'</div><div class="pjzn">Total '+w.zone_total+' · '+w.zone_count+' Players</div>':'')+'</div>'}
    if(step>O.length)return head+'<div class="pjs">🏆 બધા Winners</div><div class="pjg">'+O.map(function(k){var nm=w[k],isZ=(k==='zone'||k==='zonefull'),pd=(nm&&!isZ&&r.players)?r.players[nm]:null;return '<div class="pjt2"><small>'+esc2((typeof WINNER_LABELS!=='undefined'&&WINNER_LABELS[k])||k)+'</small><b>'+(isZ?(nm?'🏅':'—'):(pd?avHTML(pd.avatar):'—'))+'</b><span>'+(nm?esc2(nm):'—')+'</span></div>'}).join('')+'</div>';
    return head+'<div class="pjbig">🏆</div><div class="pjs">Result તૈયાર છે…</div>'}
   if(st==='ended')return head+'<div class="pjbig">🙏</div><div class="pjs">રમત પૂરી — Result ટૂંક સમયમાં</div>';
@@ -3047,6 +3047,7 @@ function PBADGE(r,sm){ var x=phaseInfo(r),k=x.ph-1,e=function(t){return String(t
 <script id="up-host2">
 function GT(){ try{ return (state.room&&state.room.gTitle)||'જ્ઞાન શોધ'; }catch(e){ return 'જ્ઞાન શોધ'; } }
 function GS(){ try{ return (state.room&&state.room.gSub)||'THE CONCLUSION'; }catch(e){ return 'THE CONCLUSION'; } }
+function pzAll(r){ var w=r.winners||{},a=w.puzzle_all||[]; if(a.length<1) return ''; var e=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}; return '<div class="pzall"><b>🧩 Mystery Image પૂર્ણ કરનાર ('+(w.puzzle_n||a.length)+')</b><div>'+a.map(function(n,i){return '<span>'+(i+1)+'. '+e(n)+'</span>'}).join('')+'</div></div>'; }
 function spReveal(){ socket.emit('host:spReveal',{code:state.code}); }
 function spGo(){ socket.emit('host:spGo',{code:state.code}); }
 var SPT={x3:['✖3','ટ્રિપલ Points'],m2:['➖','Minus −2'],x2:['✖2','ડબલ Points'],safe:['🛡','No Minus'],pen:['💀','Danger −4'],fast:['⚡','Fast +3']};
@@ -3112,6 +3113,7 @@ function hostNames(){ var t=document.getElementById('gnt'),s=document.getElement
 })();
 </script>
 <style id="up-host2-css">
+.pzall{margin-top:1vh;max-width:min(900px,92vw)}.pzall b{display:block;color:#fde68a;font-size:clamp(1rem,2.6vh,1.6rem);margin-bottom:.6vh}.pzall div{display:flex;flex-wrap:wrap;gap:.8vh 1.4vh;justify-content:center}.pzall span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:.4vh 1.6vh;font-weight:800;font-size:clamp(.85rem,2.2vh,1.3rem)}
 .pgc.on.old,.pgx .pgc.on.old{opacity:1!important;filter:none!important}
 .pgc.on.fresh{animation:none!important}
 #pj{background:radial-gradient(1200px 700px at 50% -10%,var(--pjg,var(--pl)),var(--pjb,var(--pd)) 60%,#0d0a1c)}

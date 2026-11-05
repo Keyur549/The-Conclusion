@@ -290,7 +290,8 @@ function computeWinners(room){
     winners[cat+'_tie'] = tied.length>1 ? tied : null; // more than one player claimed validly at the exact same moment
   }
   { let best=null; for (const [name,p] of Object.entries(room.players)){ const z=puzzleOf(room,p); if(!z.complete) continue; if(!best || z.doneTs<best.ts || (z.doneTs===best.ts && p.joinedAt<best.j)) best={name,ts:z.doneTs,j:p.joinedAt}; }
-    winners.puzzle = best?best.name:null; winners.puzzle_ts = best?best.ts:null; winners.puzzle_ms = best?Math.max(0,best.ts-(room.startedAt||room.createdAt)):null; }
+    winners.puzzle = best?best.name:null; winners.puzzle_ts = best?best.ts:null; winners.puzzle_ms = best?Math.max(0,best.ts-(room.startedAt||room.createdAt)):null;
+    { const all=[]; for(const [name,p] of Object.entries(room.players)){ const z=puzzleOf(room,p); if(z.complete) all.push({name,ts:z.doneTs}); } all.sort((a,b)=>a.ts-b.ts); winners.puzzle_all=all.slice(0,40).map(x=>x.name); winners.puzzle_n=all.length; } }
   // Top 3 by Final Score (ties: more correct answers, then fewer wrong, then who joined first)
   const ranked = Object.entries(room.players).map(([name,p])=>({name,p,res:playerResults(room,name,FM)}))
     .sort((a,b)=> b.res.netScore-a.res.netScore || b.res.correctCount-a.res.correctCount || a.res.wrongCount-b.res.wrongCount || a.p.joinedAt-b.p.joinedAt);
