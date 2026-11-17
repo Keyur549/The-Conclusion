@@ -3249,5 +3249,32 @@ window.almostHTML=function(r){try{ var a=r&&r.almost; if(!a) return ''; var o=''
 setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(!r) return; var st=window.__bl(r);
  document.querySelectorAll('.qimgb,#pj .pjimg').forEach(function(i){ i.style.filter=st?st.replace('filter:','').replace(';',''):'none' }) }catch(e){} },250);
 </script>
+<style id="up-pjbst">
+/* 🚀 Booster control on the projector screen (host only: faint until hovered) */
+#pj .pjbstw{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:7;display:none;gap:6px;align-items:center;opacity:.35;transition:opacity .2s}
+#pj .pjbstw:hover,#pj .pjbstw:focus-within,#pj .pjbstw.on{opacity:1}
+#pj .pjbstw button{border:0;border-radius:99px;padding:10px 16px;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(90deg,#f97316,#dc2626);cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+#pj .pjbstw.on button{background:linear-gradient(90deg,#16a34a,#15803d)}
+#pj .pjbstw select{border:0;border-radius:99px;padding:9px 8px;font-weight:800;background:rgba(255,255,255,.9);color:#111827}
+</style>
+<script id="up-pjbst">
+/* 🚀 Comeback Booster can be switched ON/OFF straight from the projector screen (button bottom-left, or press the B key) */
+(function(){
+ function ctl(){ var pj=document.getElementById('pj'); if(!pj) return null; var w=pj.querySelector('.pjbstw');
+  if(!w){ w=document.createElement('div'); w.className='pjbstw';
+   w.innerHTML='<button type="button" class="pjbb"></button><select class="pjbp" aria-label="Booster %"><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>40</option><option>50</option></select>';
+   w.querySelector('.pjbb').onclick=function(e){ e.stopPropagation(); try{ hostBoost() }catch(x){} };
+   w.querySelector('.pjbp').onchange=function(){ try{ boostPctSave(this.value) }catch(x){} };
+   pj.appendChild(w); }
+  return w; }
+ setInterval(function(){ try{ var pj=document.getElementById('pj'); if(!pj||pj.style.display==='none') return; var r=state.room, w=ctl(); if(!w) return;
+  var q=!!(r&&r.status==='question'&&r.curIdx!=null); w.style.display=q?'flex':'none'; if(!q) return;
+  var on=r.boostQ!=null&&r.boostQ===r.curIdx; w.classList.toggle('on',on);
+  var b=w.querySelector('.pjbb'), t=on?('🚀 ચાલુ · '+(r.boostN||0)+' Players (બંધ કરો)'):'🚀 Comeback Booster'; if(b.textContent!==t) b.textContent=t;
+  var s=w.querySelector('.pjbp'); if(document.activeElement!==s){ var v=String(boostPct()); if(s.value!==v) s.value=v; } }catch(e){} },400);
+ document.addEventListener('keydown',function(e){ try{ if((e.key==='b'||e.key==='B')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ var pj=document.getElementById('pj'); var t=e.target&&e.target.tagName; if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT') return;
+   if(pj&&pj.style.display!=='none'&&state.room&&state.room.status==='question') hostBoost(); } }catch(x){} });
+})();
+</script>
 </body>
 </html>
