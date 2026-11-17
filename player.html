@@ -529,8 +529,9 @@ function scoreExtra(r,pname,cellState,correctCount,wrongCount){
   const streakRes=slots.map(qi=>{ const ci=markCell(p,qi); return ci===undefined?'miss':(cellState[ci]==='green'?'ok':'bad'); });
   const streakOk=slots.length===STREAK_LEN&&streakRes.every(x=>x==='ok');
   const bs=betSpeed(r,p,pname,cellState,fm), sv=surpVault(r,p,pname,cellState,fm,shieldSaved);
-  return {surpPts:sv.surpPts,surpRes:sv.surpRes,keys:sv.keys,nKeys:sv.nKeys,vaultPts:sv.vaultPts,phaseCor:sv.phaseCor,shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,
-    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts+sv.surpPts+sv.vaultPts};
+  let boostPts=0; if(p.boost){ for(const k of Object.keys(p.boost)){ const qi=+k, ci=markCell(p,qi); if(ci===undefined) continue; if(cellState[ci]==='green') boostPts++; else if(cellState[ci]==='red' && !(cards.shield===qi && shieldSaved)) boostPts++; } }
+  return {surpPts:sv.surpPts,surpRes:sv.surpRes,keys:sv.keys,nKeys:sv.nKeys,vaultPts:sv.vaultPts,phaseCor:sv.phaseCor,shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,boostPts,
+    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts+sv.surpPts+sv.vaultPts+boostPts};
 }
 function cardTags(r,p,res,qi){
   const c=p.cards||{}, t=[];
@@ -726,6 +727,7 @@ tr.g td:nth-child(3){color:#15803d;font-weight:600}tr.b td:nth-child(3){color:#b
 <table><tr><th>#</th><th>Question</th><th>તમારો જવાબ</th><th>સાચો જવાબ</th><th></th><th>⚡/Card</th></tr>${rows}</table>
 <div class="ft" style="margin-top:8px">⚡ Speed Round Bonus: +${res.speedPts||0}</div>
 <div class="ft">🎰 Surprise: ${(res.surpPts||0)>0?'+':''}${res.surpPts||0} · 🔐 Vault (${res.nKeys||0}🗝): +${res.vaultPts||0}</div>
+${res.boostPts?`<div class="ft">🚀 Comeback Booster: +${res.boostPts}</div>`:''}
 <div class="ft" style="margin-top:8px">⚡ Fast Bonus: ${res.fastCount} (+${res.fastCount}) · 🏆 Streak: ${p.cards&&p.cards.streak!=null?(res.streakOk?'સફળ +'+res.streakBonus:'સફળ ન થઈ'):'વાપરી નથી'} · 🛡 બચાવ: ${res.shieldSaved}</div>
 <div class="ft">Net Score = સાચા − ખોટા + ⚡ Fast + 🏆 Streak · Room ${esc(r.code)}</div><button class="pr" onclick="window.print()">🖨 Print / PDF</button></div></body></html>`;
   const b=new Blob([html],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='my-report.html'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
@@ -1072,10 +1074,11 @@ function render0(){
   if(r.status==='question'){
     const remain=r.paused?Math.ceil((r.pausedMs||0)/1000):Math.max(0,Math.ceil((r.timerEnd-Date.now())/1000));
     body+=`<div class="card" style="text-align:center;font-weight:800;color:${phaseInfo(r).fast?'#b45309':'#0f766e'}">${esc(phLabel(r))}${phaseInfo(r).fast&&p.bets&&p.bets[r.curIdx]?' · 💰 Bet લગાવી છે':''}</div>`;
-    body+=`<div class="card"><div class="qtext">${esc(r.questions[r.curIdx].q)}</div>${r.questions[r.curIdx].img?`<img src="${esc(r.questions[r.curIdx].img)}" style="max-width:100%;max-height:260px;border-radius:12px;margin:8px auto;display:block" onerror="this.style.display='none'">`:''}${qaBtn(r.questions[r.curIdx])}<div class="timer">${remain}s${r.paused?' ⏸':''}</div>${r.paused?'<div class="qtext" style="text-align:center;background:#fff3b0">⏸ Game થોભાવ્યું છે — થોડી રાહ જુઓ</div>':''}
+    body+=`<div class="card"><div class="qtext">${esc(r.questions[r.curIdx].q)}</div>${r.questions[r.curIdx].img?`<img class="qimgb" src="${esc(r.questions[r.curIdx].img)}" style="${__bl(r)}max-width:100%;max-height:260px;border-radius:12px;margin:8px auto;display:block" onerror="this.style.display='none'">`:''}${qaBtn(r.questions[r.curIdx])}<div class="timer">${remain}s${r.paused?' ⏸':''}</div>${r.paused?'<div class="qtext" style="text-align:center;background:#fff3b0">⏸ Game થોભાવ્યું છે — થોડી રાહ જુઓ</div>':''}
     <button class="btn secondary" onclick='speakQuestion(${JSON.stringify(r.questions[r.curIdx].q)},true)'>🔊 સાંભળો</button>
     <button class="btn ghost" onclick="toggleAudio()">${audioOn?'🔊 Auto On':'🔇 Auto Off'}</button>
-    <div class="muted">તમારા card માં જવાબ શોધીને click કરો.</div></div>`;
+    <div class="muted">તમારા card માં જવાબ શોધીને click કરો.</div>
+    ${(p&&p.boost&&p.boost[r.curIdx])?'<div class="boostbn">🚀 <b>Comeback Booster!</b> આ પ્રશ્ને સાચા જવાબનો <b>વધારાનો 1 Point</b> અને ખોટા જવાબની <b>સજા માફ</b>.</div>':''}</div>`;
   }
   if(['question','locked','spinning','revealing','active'].includes(r.status)) body+=`<div class="card">${powerHTML(r,p)}</div>`;
   if(r.status==='locked') body+=phaseDone(r)?`<div class="card" style="text-align:center;font-weight:800">🏁 PHASE ${phaseInfo(r).ph} પૂરો!<div class="muted">હવે PHASE ${Math.floor((r.usedIdx||[]).length/PHASE_LEN)+1} ની રાહ જુઓ — Host શરૂ કરશે.</div></div>`:`<div class="card muted">⏱ સમય પૂરો — next question ની રાહ જુઓ.</div>`;
@@ -1469,6 +1472,19 @@ h1,h2{background:var(--rb);-webkit-background-clip:text;background-clip:text;-we
   render0=function(){ _r0.apply(this,arguments); try{ if(!state.code) mount(); }catch(e){} };
   try{ if(!state.code) mount(); }catch(e){}
 })();
+</script>
+<style id="up-blur">.pjalm{margin:10px auto 0;padding:.3em 1.2em;border-radius:99px;font-weight:900;font-size:clamp(1rem,3vh,2rem);color:#fff;background:linear-gradient(90deg,#dc2626,#f97316);box-shadow:0 0 26px rgba(249,115,22,.8);animation:pjalp 1s ease-in-out infinite alternate}.pjalm.l{background:linear-gradient(90deg,#0891b2,#6D28D9);box-shadow:0 0 26px rgba(109,40,217,.7);font-size:clamp(.9rem,2.5vh,1.6rem)}@keyframes pjalp{from{transform:scale(1)}to{transform:scale(1.05)}}.pjboost{display:inline-block;margin:0 auto 6px;padding:.25em 1.1em;border-radius:99px;font-weight:900;letter-spacing:.14em;font-size:clamp(1rem,3.4vh,2.2rem);color:#fff;background:linear-gradient(90deg,#f97316,#dc2626);box-shadow:0 0 28px rgba(249,115,22,.85);animation:pjbo 1s ease-in-out infinite alternate}@keyframes pjbo{from{transform:scale(1)}to{transform:scale(1.07)}}.boostbn{margin:10px auto 0;padding:10px 14px;border-radius:14px;text-align:center;font-weight:700;color:#fff;background:linear-gradient(90deg,#f97316,#dc2626);box-shadow:0 6px 18px rgba(249,115,22,.45);animation:bnp 1.2s ease-in-out infinite alternate}@keyframes bnp{from{transform:scale(1)}to{transform:scale(1.03)}}@media (prefers-reduced-motion:reduce){.pjalm,.pjboost,.boostbn{animation:none}}.pjalmbox{position:fixed;left:16px;top:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;z-index:6;max-width:38vw;pointer-events:none}.pjalmbox .pjalm{margin:0;font-size:clamp(.8rem,2.3vh,1.5rem);padding:.3em .9em}.pjalmbox .pjalm.l{font-size:clamp(.75rem,2.1vh,1.3rem)}.qimgb,.pjimg{transition:filter .25s linear}</style>
+<script id="up-blur-js">
+/* 🌫 Blur-to-Clear: photo starts blurred and gets sharp as the timer runs out.  🔥 Almost There helper */
+window.__bl=function(r){try{ if(!r||r.blurImg===false||r.status!=='question') return ''; var q=r.questions&&r.questions[r.curIdx]; if(!q||!q.img) return '';
+ var rem=r.paused?(r.pausedMs||0):Math.max(0,(r.timerEnd||0)-Date.now()), tot=(r.qTotal||r.qSec||30)*1000, f=Math.max(0,Math.min(1,rem/tot)), px=Math.round(26*Math.pow(f,1.15)*10)/10;
+ return px>0.4?'filter:blur('+px+'px) saturate(.9);':'' }catch(e){ return '' }};
+window.almostHTML=function(r){try{ var a=r&&r.almost; if(!a) return ''; var o='';
+ if(a.full>0) o+='<div class="pjalm">🔥 '+a.full+' Players Full House થી ફક્ત 1 ખાનું દૂર!</div>';
+ if(a.line>0) o+='<div class="pjalm l">⚡ '+a.line+' Players પહેલી Line થી ફક્ત 1 ખાનું દૂર!</div>';
+ return o?'<div class="pjalmbox">'+o+'</div>':'' }catch(e){ return '' }};
+setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(!r) return; var st=window.__bl(r);
+ document.querySelectorAll('.qimgb,#pj .pjimg').forEach(function(i){ i.style.filter=st?st.replace('filter:','').replace(';',''):'none' }) }catch(e){} },250);
 </script>
 </body>
 </html>

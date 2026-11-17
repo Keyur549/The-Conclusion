@@ -266,8 +266,12 @@ function playerResults(room, pname, fm){
     const streakOk = slots.length===STREAK_LEN && slotRes.every(x=>x==='ok');
     const bs = betSpeed(room,p,pname,cellState,fm);
     const sv = surpVault(room,p,pname,cellState,fm,shieldSaved);
-    Object.assign(out, { surpPts:sv.surpPts, surpRes:sv.surpRes, keys:sv.keys, nKeys:sv.nKeys, vaultPts:sv.vaultPts, phaseCor:sv.phaseCor, shieldSaved, fastQs, fastCount:fastQs.length, streakSlots:slots, streakRes:slotRes, streakOk, streakBonus: streakOk?STREAK_BONUS:0, betPts:bs.betPts, speedPts:bs.speedPts, betRes:bs.bets,
-      netScore: correctCount - (wrongCount-shieldSaved) + fastQs.length*FAST_BONUS + (streakOk?STREAK_BONUS:0) + bs.betPts + bs.speedPts + sv.surpPts + sv.vaultPts });
+    // 🚀 Comeback Booster question: correct answer counts DOUBLE (+1 extra), a wrong answer costs nothing (+1 back; not twice if the Shield already saved it)
+    let boostPts = 0;
+    if (p.boost) for (const k of Object.keys(p.boost)){ const qi=+k, ci=markCell(p,qi); if(ci===undefined) continue;
+      if (cellState[ci]==='green') boostPts++; else if (cellState[ci]==='red' && !(cards.shield===qi && shieldSaved)) boostPts++; }
+    Object.assign(out, { boostPts, surpPts:sv.surpPts, surpRes:sv.surpRes, keys:sv.keys, nKeys:sv.nKeys, vaultPts:sv.vaultPts, phaseCor:sv.phaseCor, shieldSaved, fastQs, fastCount:fastQs.length, streakSlots:slots, streakRes:slotRes, streakOk, streakBonus: streakOk?STREAK_BONUS:0, betPts:bs.betPts, speedPts:bs.speedPts, betRes:bs.bets,
+      netScore: correctCount - (wrongCount-shieldSaved) + fastQs.length*FAST_BONUS + (streakOk?STREAK_BONUS:0) + bs.betPts + bs.speedPts + sv.surpPts + sv.vaultPts + boostPts });
   } else out.netScore = correctCount - wrongCount;
   return out;
 }
@@ -317,12 +321,29 @@ function pubPlayer(room,p){
   for (const [k,c] of Object.entries(p.claims||{})) claims[k] = {ts:(c.shownTs||c.ts), marks:c.marks};
   return {...p, claims, _f: undefined, _c: undefined, stk: streakSlots(room,p), pz: puzLive(room,p)};
 }
+// 🔥 "Almost There": how many players are exactly ONE correct cell away from Full House / from their first Line (counts only, never names).
+const ALMC = new WeakMap();
+function almostOf(room){
+  const now = Date.now(), c = ALMC.get(room); if (c && now-c.t < 1000) return c.v;
+  let full=0, line=0;
+  if (room.status!=='lobby' && room.status!=='ended' && room.status!=='revealed' && room.questions){
+    for (const p of Object.values(room.players||{})){
+      if (!p || !p.card || !p.marks) continue;
+      const g = new Array(25).fill(false); let gc=0;
+      for (const [ci,qi] of Object.entries(p.marks)){ const q=room.questions[qi]; if (q && q.a===p.card[+ci]){ g[+ci]=true; gc++; } }
+      if (gc===24){ const ci=g.indexOf(false); if (p.marks[ci]===undefined) full++; }
+      if (LINES.some(l=>l.every(ci=>g[ci]))) continue;
+      if (LINES.some(l=>{ let k=0, open=-1; for(const ci of l){ if(g[ci]) k++; else open=ci; } return k===4 && p.marks[open]===undefined; })) line++;
+    }
+  }
+  const v = {full, line}; ALMC.set(room,{t:now,v}); return v;
+}
 function publicRoom(room){
   // Until results are revealed, never send correct answers or claim validity to browsers.
   if (room.status==='revealed') return {...room, cert:undefined};
   const players = {};
   for (const [n,p] of Object.entries(room.players)) players[n] = pubPlayer(room,p);
-  return {...room, cert:undefined, questions: room.questions.map(q=>({q:q.q, img:q.img, aud:q.aud})), players};
+  return {...room, cert:undefined, questions: room.questions.map(q=>({q:q.q, img:q.img, aud:q.aud})), players, almost: almostOf(room)};
 }
 // ---- 500-player friendly state: a PLAYER only receives his own data (+ the few winners after the reveal).
 // The HOST receives the full room, but at most about once per second.
@@ -629,7 +650,7 @@ io.on('connection', (socket) => {
   function beginQ(code, idx){
     const rr=rooms[code]; if(!rr||rr.status!=='revealing'||rr.curIdx!==idx) return;
     const sec = isFastQ(rr,idx) ? Math.min(rr.qSec||30, FAST_SEC) : (rr.qSec||30);
-    rr.status='question'; rr.betEnd=null; rr.timerEnd=Date.now()+sec*1000; broadcast(code);
+    rr.status='question'; rr.betEnd=null; rr.timerEnd=Date.now()+sec*1000; rr.qTotal=sec; broadcast(code);
   }
   function advanceToRevealing(code, idx){
     const r=rooms[code]; if(!r||r.status!=='spinning'||r.curIdx!==idx) return;
@@ -667,6 +688,35 @@ io.on('connection', (socket) => {
     sec = Math.round(+sec); if(!(sec>=10 && sec<=60)) return;
     r.qSec = sec; broadcast(code);
   });
+  // 🚀 Comeback Booster: for THIS question the lowest-scoring players (bottom pct %) get a correct answer x2 and no penalty for a wrong one.
+  // Only players with >=3 answers who are online are eligible; ties at the cut-off are included but never more than 1.5x the target.
+  socket.on('host:boost', ({code, pct}, cb) => {
+    const r = rooms[code]; if(!r || r.status!=='question' || r.curIdx==null){ cb&&cb({ok:false}); return; }
+    const qi = r.curIdx;
+    if (r.boostQ === qi){
+      for (const p of Object.values(r.players)) if (p.boost) delete p.boost[qi];
+      r.boostQ = null; r.boostN = 0; broadcast(code); cb&&cb({ok:true, on:false}); return;
+    }
+    pct = Math.min(50, Math.max(5, Math.round(+pct||25)));
+    const now = Date.now(), list = [], FM = fastMap(r);
+    for (const [name,p] of Object.entries(r.players)){
+      if (Object.keys(p.marks||{}).length < 3) continue;
+      if (!p.bot){ const t = SEEN[code+'|'+name]||0; if (now-t > ONLINE_MS+5000) continue; }
+      const res = playerResults(r, name, FM);
+      list.push({name, sc:res.netScore, cc:res.correctCount, at:p.joinedAt||0});
+    }
+    list.sort((a,b)=> a.sc-b.sc || a.cc-b.cc || a.at-b.at);
+    const k = Math.max(1, Math.ceil(list.length*pct/100));
+    let cut = k; if (list.length>k){ const edge = list[k-1].sc; while (cut<list.length && list[cut].sc===edge && cut < Math.ceil(k*1.5)) cut++; }
+    const chosen = list.slice(0, Math.min(cut, list.length));
+    for (const p of Object.values(r.players)) if (p.boost) delete p.boost[qi];
+    for (const o of chosen){ const p=r.players[o.name]; if(!p.boost) p.boost={}; p.boost[qi]=true; }
+    r.boostQ = qi; r.boostN = chosen.length; r.boostPct = pct;
+    broadcast(code); cb&&cb({ok:true, on:true, n:chosen.length, of:list.length});
+  });
+  // 🌫 Blur-to-Clear photo questions on/off (default ON)
+  socket.on('host:setBlur', ({code,on}) => { const r=rooms[code]; if(!r) return; r.blurImg = !!on; broadcast(code); });
+
   socket.on('host:skipTimer', ({code}) => {
     const r = rooms[code]; if(!r || r.status!=='question') return;
     r.status='locked'; r.paused=false; r.pausedMs=null; r.timerEnd=null; broadcast(code);

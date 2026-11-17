@@ -1995,6 +1995,11 @@ function subscribe(){
 }
 function hostSetTimer(s){ socket.emit('host:setTimer',{code:state.code,sec:s}); }
 function hostSkipTimer(){ socket.emit('host:skipTimer',{code:state.code}); }
+function boostToast(t){ try{ var d=document.createElement('div'); d.textContent=t; d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;background:#111827;color:#fff;padding:12px 20px;border-radius:99px;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.4)'; document.body.appendChild(d); setTimeout(function(){ d.remove() },3200) }catch(e){} }
+function hostBlur(on){ socket.emit('host:setBlur',{code:state.code,on:!!on}); }
+function boostPct(){ try{ var v=+localStorage.getItem('gsBoostPct'); return v>=5&&v<=50?v:25 }catch(e){ return 25 } }
+function boostPctSave(v){ v=Math.min(50,Math.max(5,Math.round(+v||25))); try{ localStorage.setItem('gsBoostPct',v) }catch(e){} }
+function hostBoost(){ var el=document.getElementById('bstPct'); if(el) boostPctSave(el.value); socket.emit('host:boost',{code:state.code,pct:boostPct()},function(a){ try{ if(a&&a.ok&&a.on) boostToast('🚀 Comeback Booster ચાલુ: '+a.n+' / '+a.of+' Players ને મળ્યું'); else if(a&&a.ok) boostToast('Booster બંધ કર્યું'); else boostToast('Booster ફક્ત પ્રશ્ન ચાલુ હોય ત્યારે થાય'); }catch(e){} }); }
 function hostPause(){ socket.emit('host:pause',{code:state.code}); }
 function hostResume(){ socket.emit('host:resume',{code:state.code}); }
 function hostUndo(){
@@ -2448,8 +2453,9 @@ function scoreExtra(r,pname,cellState,correctCount,wrongCount){
   const streakRes=slots.map(qi=>{ const ci=markCell(p,qi); return ci===undefined?'miss':(cellState[ci]==='green'?'ok':'bad'); });
   const streakOk=slots.length===STREAK_LEN&&streakRes.every(x=>x==='ok');
   const bs=betSpeed(r,p,pname,cellState,fm), sv=surpVault(r,p,pname,cellState,fm,shieldSaved);
-  return {surpPts:sv.surpPts,surpRes:sv.surpRes,keys:sv.keys,nKeys:sv.nKeys,vaultPts:sv.vaultPts,phaseCor:sv.phaseCor,shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,
-    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts+sv.surpPts+sv.vaultPts};
+  let boostPts=0; if(p.boost){ for(const k of Object.keys(p.boost)){ const qi=+k, ci=markCell(p,qi); if(ci===undefined) continue; if(cellState[ci]==='green') boostPts++; else if(cellState[ci]==='red' && !(cards.shield===qi && shieldSaved)) boostPts++; } }
+  return {surpPts:sv.surpPts,surpRes:sv.surpRes,keys:sv.keys,nKeys:sv.nKeys,vaultPts:sv.vaultPts,phaseCor:sv.phaseCor,shieldSaved,fastQs,fastCount:fastQs.length,streakSlots:slots,streakRes,streakOk,streakBonus:streakOk?STREAK_BONUS:0,betPts:bs.betPts,speedPts:bs.speedPts,betRes:bs.bets,boostPts,
+    netScore:correctCount-(wrongCount-shieldSaved)+fastQs.length*FAST_BONUS+(streakOk?STREAK_BONUS:0)+bs.betPts+bs.speedPts+sv.surpPts+sv.vaultPts+boostPts};
 }
 function cardTags(r,p,res,qi){
   const c=p.cards||{}, t=[];
@@ -2582,6 +2588,7 @@ function render(){
     <button class="btn ghost" onclick="toggleAudio()">${audioOn?'🔊 Auto On':'🔇 Auto Off'}</button>
     ${r.paused?'<button class="btn" onclick="hostResume()">▶ Resume (ચાલુ કરો)</button>':'<button class="btn secondary" onclick="hostPause()">⏸ Pause (થોભાવો)</button>'}
     <button class="btn" style="background:#f59e0b;color:#3b2a00" onclick="hostSkipTimer()">⏭ Time Skip (હમણાં બંધ કરો)</button>
+    <span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn" style="background:${r.boostQ===r.curIdx?'#16a34a':'#f97316'};color:#fff" onclick="hostBoost()">🚀 Comeback Booster${r.boostQ===r.curIdx?' ચાલુ ('+(r.boostN||0)+' Players) — બંધ કરો':''}</button><label class="muted" style="font-weight:700"><input type="checkbox" ${r.blurImg!==false?'checked':''} onchange="hostBlur(this.checked)"> 🌫 Blur-to-Clear</label><label class="muted" style="font-weight:700">નીચેના <input id="bstPct" type="number" min="5" max="50" value="${boostPct()}" onchange="boostPctSave(this.value)" style="width:58px;padding:6px;border-radius:8px;border:1px solid #cbd5e1;font-weight:800"> %</label></span>
     <button class="btn ghost" onclick="hostUndo()">↩️ આ Question Undo</button>
     <button class="btn ghost" onclick="hostEnd()">End Game</button></div>`;
   } else if(r.status==='ended') body+=`<div class="card"><button class="btn" onclick="hostReveal()">🏆 Reveal Results</button></div>`;
@@ -2744,14 +2751,14 @@ function pvAnnounce(r){var O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[]
    return head+'<div class="pjrow"><div>'+(u?'<img class="pjqr" src="'+u+'">':'')+'</div><div><div class="pjs">Room Code</div><div class="pjbig">'+esc2(r.code)+'</div><div class="pjs">📲 QR Scan કરો અને Join થાઓ</div><div class="pjn">👥 '+Object.keys(r.players||{}).length+'</div></div></div>'}
   if(st==='question'||st==='locked'){var q=(r.questions&&r.questions[r.curIdx])||{},rem=r.paused?Math.ceil((r.pausedMs||0)/1000):Math.max(0,Math.ceil(((r.timerEnd||0)-Date.now())/1000));
    var n=(r.usedIdx||[]).length;
-   return head+'<div class="pjs">પ્રશ્ન '+n+(r.round!=null?' · Round '+((r.round||0)+1):'')+'</div><div class="pjq">'+esc2(twText(r,q.q||''))+'</div>'+(q.img?'<img class="pjimg" src="'+esc2(q.img)+'" onerror="this.style.display=\'none\'">':'')+'<div class="pjt'+(rem<=5&&st==='question'?' lo':'')+'">'+(st==='locked'?'⏹':(r.paused?'⏸ ':'')+rem)+'</div>'+bars(r)}
+   return head+(r.boostQ!=null&&r.boostQ===r.curIdx?'<div class="pjboost">🚀 COMEBACK BOOSTER</div>':'')+'<div class="pjs">પ્રશ્ન '+n+(r.round!=null?' · Round '+((r.round||0)+1):'')+'</div><div class="pjq">'+esc2(twText(r,q.q||''))+'</div>'+(q.img?'<img class="pjimg" style="'+__bl(r)+'" src="'+esc2(q.img)+'" onerror="this.style.display=\'none\'">':'')+'<div class="pjt'+(rem<=5&&st==='question'?' lo':'')+'">'+(st==='locked'?'⏹':(r.paused?'⏸ ':'')+rem)+'</div>'+bars(r)+almostHTML(r)}
   if(st==='revealed'){var w=r.winners||{},step=r.revealStep||0,O=(typeof WINNER_ORDER!=='undefined')?WINNER_ORDER:[];
    if(step>=1&&step<=O.length){var k=O[step-1],nm=w[k],isZ=(k==='zone'||k==='zonefull'),pd=(nm&&!isZ&&r.players)?r.players[nm]:null;
     return head+'<div class="pjw"><div class="pjc">👑</div><div class="pjl">'+esc2((typeof WINNER_LABELS!=='undefined'&&WINNER_LABELS[k])||k)+'</div><div class="pjav">'+(isZ?(nm?'🏅':'❓'):(pd?avHTML(pd.avatar):'❓'))+'</div><div class="pjname">'+(nm?esc2(nm):'કોઈ Winner નથી')+'</div>'+(pd&&pd.zone?'<div class="pjzn">📍 '+esc2(pd.zone)+'</div>':'')+(w[k+'_score']!=null?'<div class="pjsc">🎯 '+w[k+'_score']+'</div>':'')+(k==='zone'&&w.zone_avg!=null?'<div class="pjsc">📊 Average Score: '+w.zone_avg+'</div><div class="pjzn">Total '+w.zone_total+' · '+w.zone_count+' Players</div>':'')+'</div>'}
    if(step>O.length)return head+'<div class="pjs">🏆 બધા Winners</div><div class="pjg">'+O.map(function(k){var nm=w[k],isZ=(k==='zone'||k==='zonefull'),pd=(nm&&!isZ&&r.players)?r.players[nm]:null;return '<div class="pjt2"><small>'+esc2((typeof WINNER_LABELS!=='undefined'&&WINNER_LABELS[k])||k)+'</small><b>'+(isZ?(nm?'🏅':'—'):(pd?avHTML(pd.avatar):'—'))+'</b><span>'+(nm?esc2(nm):'—')+'</span></div>'}).join('')+'</div>';
    return head+'<div class="pjbig">🏆</div><div class="pjs">Result તૈયાર છે…</div>'}
   if(st==='ended')return head+'<div class="pjbig">🙏</div><div class="pjs">રમત પૂરી — Result ટૂંક સમયમાં</div>';
-  if(st==='active'||st==='spinning'||st==='revealing'){var n2=(r.usedIdx||[]).length;return head+'<div class="pjbig">🎡</div><div class="pjs">'+(n2?'પ્રશ્ન '+n2+' પછી…':'Game શરૂ થાય છે…')+'</div>'+bars(r)}
+  if(st==='active'||st==='spinning'||st==='revealing'){var n2=(r.usedIdx||[]).length;return head+'<div class="pjbig">🎡</div><div class="pjs">'+(n2?'પ્રશ્ન '+n2+' પછી…':'Game શરૂ થાય છે…')+'</div>'+bars(r)+almostHTML(r)}
   return head+'<div class="pjbig">🎁</div><div class="pjs">'+(r.round!=null?'Round '+((r.round||0)+1)+' · ':'')+'થોભો…</div>'}
  var ON={on:null,tot:0,off:[]},onT=null;
  function onPoll(){try{if(!open||typeof state==='undefined'||!state.code)return;socket.emit('host:online',{code:state.code},function(d){if(d&&d.ok){ON={on:d.online,tot:d.total,off:d.off||[]}}})}catch(e){}}
@@ -3228,6 +3235,19 @@ h1,h2{background:var(--rb);-webkit-background-clip:text;background-clip:text;-we
   };
   try{ render(); }catch(e){}
 })();
+</script>
+<style id="up-blur">.pjalm{margin:10px auto 0;padding:.3em 1.2em;border-radius:99px;font-weight:900;font-size:clamp(1rem,3vh,2rem);color:#fff;background:linear-gradient(90deg,#dc2626,#f97316);box-shadow:0 0 26px rgba(249,115,22,.8);animation:pjalp 1s ease-in-out infinite alternate}.pjalm.l{background:linear-gradient(90deg,#0891b2,#6D28D9);box-shadow:0 0 26px rgba(109,40,217,.7);font-size:clamp(.9rem,2.5vh,1.6rem)}@keyframes pjalp{from{transform:scale(1)}to{transform:scale(1.05)}}.pjboost{display:inline-block;margin:0 auto 6px;padding:.25em 1.1em;border-radius:99px;font-weight:900;letter-spacing:.14em;font-size:clamp(1rem,3.4vh,2.2rem);color:#fff;background:linear-gradient(90deg,#f97316,#dc2626);box-shadow:0 0 28px rgba(249,115,22,.85);animation:pjbo 1s ease-in-out infinite alternate}@keyframes pjbo{from{transform:scale(1)}to{transform:scale(1.07)}}.boostbn{margin:10px auto 0;padding:10px 14px;border-radius:14px;text-align:center;font-weight:700;color:#fff;background:linear-gradient(90deg,#f97316,#dc2626);box-shadow:0 6px 18px rgba(249,115,22,.45);animation:bnp 1.2s ease-in-out infinite alternate}@keyframes bnp{from{transform:scale(1)}to{transform:scale(1.03)}}@media (prefers-reduced-motion:reduce){.pjalm,.pjboost,.boostbn{animation:none}}.pjalmbox{position:fixed;left:16px;top:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;z-index:6;max-width:38vw;pointer-events:none}.pjalmbox .pjalm{margin:0;font-size:clamp(.8rem,2.3vh,1.5rem);padding:.3em .9em}.pjalmbox .pjalm.l{font-size:clamp(.75rem,2.1vh,1.3rem)}.qimgb,.pjimg{transition:filter .25s linear}</style>
+<script id="up-blur-js">
+/* 🌫 Blur-to-Clear: photo starts blurred and gets sharp as the timer runs out.  🔥 Almost There helper */
+window.__bl=function(r){try{ if(!r||r.blurImg===false||r.status!=='question') return ''; var q=r.questions&&r.questions[r.curIdx]; if(!q||!q.img) return '';
+ var rem=r.paused?(r.pausedMs||0):Math.max(0,(r.timerEnd||0)-Date.now()), tot=(r.qTotal||r.qSec||30)*1000, f=Math.max(0,Math.min(1,rem/tot)), px=Math.round(26*Math.pow(f,1.15)*10)/10;
+ return px>0.4?'filter:blur('+px+'px) saturate(.9);':'' }catch(e){ return '' }};
+window.almostHTML=function(r){try{ var a=r&&r.almost; if(!a) return ''; var o='';
+ if(a.full>0) o+='<div class="pjalm">🔥 '+a.full+' Players Full House થી ફક્ત 1 ખાનું દૂર!</div>';
+ if(a.line>0) o+='<div class="pjalm l">⚡ '+a.line+' Players પહેલી Line થી ફક્ત 1 ખાનું દૂર!</div>';
+ return o?'<div class="pjalmbox">'+o+'</div>':'' }catch(e){ return '' }};
+setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(!r) return; var st=window.__bl(r);
+ document.querySelectorAll('.qimgb,#pj .pjimg').forEach(function(i){ i.style.filter=st?st.replace('filter:','').replace(';',''):'none' }) }catch(e){} },250);
 </script>
 </body>
 </html>
