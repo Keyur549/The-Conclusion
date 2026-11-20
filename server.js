@@ -417,11 +417,20 @@ setInterval(() => {
 
 
 // ---------- 🌪 Chaos Card (SOFT) ----------
-// Every player owns ONE Chaos Card per game. During a question he can fire it at ANOTHER PLAYER (found by name) or at ANOTHER ZONE:
+// Every player owns ONE Chaos Card per game. During a question he can fire it at ANOTHER PLAYER (found by name) - players only, never a whole zone:
 // only the still-UNMARKED cells of the victim's card are shuffled; every cell that already holds an answer stays where it is.
-// Fairness: a player can be hit at most CH_MAX_HITS times per game and once per question; a zone can be hit only once per game; you can never hit yourself or your own zone.
+// 🛡 SILENT Chaos Shield: a player who has given 3 correct answers in a row (counting only questions whose answer is on his own card) secretly earns a Shield. He is never told
+//    (that would leak that his answers were right); it only shows when it blocks: the attack is bounced back, i.e. the ATTACKER's own empty cells get shuffled instead.
+// Fairness: a player can be hit at most CH_MAX_HITS times per game and once per question; you can never hit yourself.
 const CH_MAX_HITS = 2;
 const chKey = z => String(z||'').trim().toLowerCase();
+// number of Shields a player has earned so far = completed runs of 3 correct answers (questions BEFORE the current one only), minus the ones already used
+function chShields(r,p){
+  const pos=r.usedIdx.indexOf(r.curIdx); const upto=pos<0?r.usedIdx.length:pos; let run=0, earned=0;
+  for(let i=0;i<upto;i++){ const qi=r.usedIdx[i], q=r.questions[qi]; if(!q||!p.card.includes(q.a)) continue;
+    const ci=Object.keys(p.marks).find(k=>p.marks[k]===qi); if(ci!==undefined && p.card[+ci]===q.a){ if(++run===3){ earned++; run=0; } } else run=0; }
+  return earned-(p.chShUsed||0);
+}
 const chOnline = (r,code,k,p) => p.bot || (Date.now()-(SEEN[code+'|'+k]||0)) <= ONLINE_MS+5000;
 function softShuffle(p){
   const U=[]; for(let i=0;i<25;i++) if(p.marks[i]===undefined) U.push(i);
@@ -748,23 +757,19 @@ io.on('connection', (socket) => {
     const p=r.players[name]; if(!p) return fail('Player મળ્યો નહિ.');
     if(p.cc) return fail('તમારું Chaos Card વપરાઈ ગયું છે. દરેકને ફક્ત 1 મળે છે.');
     const okT=t=>(t.chHits||0)<CH_MAX_HITS && t.chHitQ!==r.curIdx;
-    let victims=[], label='';
-    if(kind==='zone'){
-      const k=chKey(target); if(!k) return fail('Zone પસંદ કરો.'); if(k===chKey(p.zone)) return fail('તમારા પોતાના Zone પર નહિ વાપરી શકાય.');
-      r.chaosHit=r.chaosHit||{}; if(r.chaosHit[k]) return fail('આ Zone પર Chaos થઈ ગયું છે. બીજો Zone પસંદ કરો.');
-      const all=Object.entries(r.players).filter(([kk,t])=>chKey(t.zone)===k); if(!all.length) return fail('આ Zone માં કોઈ Player નથી.');
-      victims=all.map(x=>x[1]).filter(okT); if(!victims.length) return fail('આ Zone ના Players પર હમણાં Chaos થઈ શકે નહિ.');
-      label='Zone '+String(all[0][1].zone).trim(); r.chaosHit[k]=true;
-    } else {
-      const t=r.players[target]; if(!t || target===name) return fail('Player મળ્યો નહિ.');
-      if(!okT(t)) return fail('આ Player પર હમણાં Chaos થઈ શકે નહિ (એ પહેલેથી Chaos માં આવી ચૂક્યો છે). બીજો પસંદ કરો.');
-      victims=[t]; label=t.baseName||target;
-    }
+    const t=r.players[target]; if(kind==='zone' || !t || target===name) return fail('Player મળ્યો નહિ.');
+    if(!okT(t)) return fail('આ Player પર હમણાં Chaos થઈ શકે નહિ (એ પહેલેથી Chaos માં આવી ચૂક્યો છે). બીજો પસંદ કરો.');
+    const label=t.baseName||target, victims=[t];
     const now=Date.now(), from=(p.baseName||name)+(p.zone?' · '+String(p.zone).trim():'');
-    for (const t of victims){ softShuffle(t); t.chz={qi:r.curIdx, from, ts:now}; t.chaosAt=now; t.chHits=(t.chHits||0)+1; t.chHitQ=r.curIdx; }
-    p.cc={qi:r.curIdx, to:label, ts:now};
-    r.chaosLog=r.chaosLog||[]; r.chaosLog.push({qi:r.curIdx, from:p.baseName||name, fz:String(p.zone||'').trim(), to:label, n:victims.length, ts:now}); if(r.chaosLog.length>40) r.chaosLog.shift();
-    broadcast(code); cb&&cb({ok:true,to:label,n:victims.length});
+    r.chaosLog=r.chaosLog||[]; const ent={qi:r.curIdx, from:p.baseName||name, fz:String(p.zone||'').trim(), to:label, n:1, ts:now};
+    if(chShields(r,t)>0){        // 🛡 silent Shield: the victim is safe, the attack bounces back onto the ATTACKER's empty cells (not counted as a hit)
+      t.chShUsed=(t.chShUsed||0)+1; t.chsb={qi:r.curIdx, from:p.baseName||name, ts:now};
+      softShuffle(p); p.chz={qi:r.curIdx, from:label, ts:now, refl:true}; p.chaosAt=now; p.cc={qi:r.curIdx, to:label, ts:now, blk:true}; ent.blk=true;
+    } else {
+      softShuffle(t); t.chz={qi:r.curIdx, from, ts:now}; t.chaosAt=now; t.chHits=(t.chHits||0)+1; t.chHitQ=r.curIdx; p.cc={qi:r.curIdx, to:label, ts:now};
+    }
+    r.chaosLog.push(ent); if(r.chaosLog.length>40) r.chaosLog.shift();
+    broadcast(code); cb&&cb({ok:true,to:label,n:1,blocked:!!ent.blk});
   });
   socket.on('host:chaosOn', ({code,on}) => { const r=rooms[code]; if(!r) return; r.chOff=!on; broadcast(code); });
 

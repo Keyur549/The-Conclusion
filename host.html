@@ -3295,7 +3295,7 @@ function hostChaosOn(on){ socket.emit('host:chaosOn',{code:state.code,on:!!on});
   w.style.display=(r.status==='question')?'block':'none'; var bt=w.querySelector('button'), t=r.chOff?'🌪 Chaos Card બંધ':'🌪 Chaos Card ચાલુ'; if(bt.textContent!==t) bt.textContent=t; bt.className=r.chOff?'off':'';
   var b=pjEl('pjzbn',function(){ return document.createElement('div'); }), txt='';
   var ev=(r.chaosLog||[]).filter(function(e){ return e.qi===r.curIdx; }).slice(-2);
-  if((r.status==='question'||r.status==='locked')&&ev.length){ txt=ev.map(function(e){ return '🌪 '+e.from+(e.fz?' ('+e.fz+')':'')+' → '+e.to; }).join('   |   '); }
+  if((r.status==='question'||r.status==='locked')&&ev.length){ txt=ev.map(function(e){ return e.blk?'🛡 '+e.to+' નું Shield! '+e.from+' નું Chaos પાછું ફર્યું'  :'🌪 '+e.from+(e.fz?' ('+e.fz+')':'')+' → '+e.to; }).join('   |   '); }
   b.style.display=txt?'block':'none'; if(txt&&b.textContent!==txt) b.textContent=txt; }catch(e){} },400);
 })();
 </script>
