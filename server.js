@@ -416,6 +416,23 @@ setInterval(() => {
 }, 1000);
 
 
+// ---------- 🌪 Chaos Card (SOFT) ----------
+// Every player owns ONE Chaos Card per game. During a question he can fire it at ANOTHER PLAYER (found by name) or at ANOTHER ZONE:
+// only the still-UNMARKED cells of the victim's card are shuffled; every cell that already holds an answer stays where it is.
+// Fairness: a player can be hit at most CH_MAX_HITS times per game and once per question; a zone can be hit only once per game; you can never hit yourself or your own zone.
+const CH_MAX_HITS = 2;
+const chKey = z => String(z||'').trim().toLowerCase();
+const chOnline = (r,code,k,p) => p.bot || (Date.now()-(SEEN[code+'|'+k]||0)) <= ONLINE_MS+5000;
+function softShuffle(p){
+  const U=[]; for(let i=0;i<25;i++) if(p.marks[i]===undefined) U.push(i);
+  if(U.length<2) return false;
+  const old=p.card.slice(); let sh=U.map(i=>old[i]);
+  for(let t=0;t<4;t++){ sh=shuffle(U.map(i=>old[i])); if(sh.some((v,j)=>v!==old[U[j]])) break; }
+  U.forEach((ci,j)=>{ p.card[ci]=sh[j]; });
+  if(p._f && p._f.cells) p._f.cells=p._f.cells.map(i=> p.marks[i]!==undefined ? i : p.card.indexOf(old[i]));   // 50-50 highlights follow their answers
+  return true;
+}
+
 const SEEN = {};   // code|key -> last time that player's browser talked to us (join, tap, resync every 4 s)
 function seen(code,key){ if (key) SEEN[code+'|'+key]=Date.now(); }
 const ONLINE_MS = +process.env.ONLINE_MS || 10000;
@@ -714,6 +731,43 @@ io.on('connection', (socket) => {
     r.boostQ = qi; r.boostN = chosen.length; r.boostPct = pct;
     broadcast(code); cb&&cb({ok:true, on:true, n:chosen.length, of:list.length});
   });
+
+  // 🌪 Chaos Card: look up players by name (max 8 matches; the full player list is never sent to phones)
+  socket.on('player:chaosFind', ({code,name,q}, cb) => {
+    seen(code,name); const r=rooms[code]; if(!r||!r.players[name]) return cb&&cb({ok:false,list:[]});
+    q=String(q||'').trim().toLowerCase(); if(!q) return cb&&cb({ok:true,list:[]});
+    const list=[]; for (const [k,t] of Object.entries(r.players)){
+      if(k===name || !String(t.baseName||k).toLowerCase().includes(q) || !chOnline(r,code,k,t)) continue;
+      list.push({k, n:t.baseName||k, z:t.zone||'', a:t.avatar||''}); if(list.length>=8) break; }
+    cb&&cb({ok:true,list});
+  });
+  // 🌪 fire the Chaos Card at a player or a zone
+  socket.on('player:chaos', ({code,name,kind,target}, cb) => {
+    seen(code,name); const r=rooms[code]; const fail=m=>{ cb&&cb({ok:false,error:m}); };
+    if(!r || r.status!=='question' || r.paused || r.chOff) return fail('હમણાં Chaos Card વાપરી શકાય નહિ.');
+    const p=r.players[name]; if(!p) return fail('Player મળ્યો નહિ.');
+    if(p.cc) return fail('તમારું Chaos Card વપરાઈ ગયું છે. દરેકને ફક્ત 1 મળે છે.');
+    const okT=t=>(t.chHits||0)<CH_MAX_HITS && t.chHitQ!==r.curIdx;
+    let victims=[], label='';
+    if(kind==='zone'){
+      const k=chKey(target); if(!k) return fail('Zone પસંદ કરો.'); if(k===chKey(p.zone)) return fail('તમારા પોતાના Zone પર નહિ વાપરી શકાય.');
+      r.chaosHit=r.chaosHit||{}; if(r.chaosHit[k]) return fail('આ Zone પર Chaos થઈ ગયું છે. બીજો Zone પસંદ કરો.');
+      const all=Object.entries(r.players).filter(([kk,t])=>chKey(t.zone)===k); if(!all.length) return fail('આ Zone માં કોઈ Player નથી.');
+      victims=all.map(x=>x[1]).filter(okT); if(!victims.length) return fail('આ Zone ના Players પર હમણાં Chaos થઈ શકે નહિ.');
+      label='Zone '+String(all[0][1].zone).trim(); r.chaosHit[k]=true;
+    } else {
+      const t=r.players[target]; if(!t || target===name) return fail('Player મળ્યો નહિ.');
+      if(!okT(t)) return fail('આ Player પર હમણાં Chaos થઈ શકે નહિ (એ પહેલેથી Chaos માં આવી ચૂક્યો છે). બીજો પસંદ કરો.');
+      victims=[t]; label=t.baseName||target;
+    }
+    const now=Date.now(), from=(p.baseName||name)+(p.zone?' · '+String(p.zone).trim():'');
+    for (const t of victims){ softShuffle(t); t.chz={qi:r.curIdx, from, ts:now}; t.chaosAt=now; t.chHits=(t.chHits||0)+1; t.chHitQ=r.curIdx; }
+    p.cc={qi:r.curIdx, to:label, ts:now};
+    r.chaosLog=r.chaosLog||[]; r.chaosLog.push({qi:r.curIdx, from:p.baseName||name, fz:String(p.zone||'').trim(), to:label, n:victims.length, ts:now}); if(r.chaosLog.length>40) r.chaosLog.shift();
+    broadcast(code); cb&&cb({ok:true,to:label,n:victims.length});
+  });
+  socket.on('host:chaosOn', ({code,on}) => { const r=rooms[code]; if(!r) return; r.chOff=!on; broadcast(code); });
+
   // 🌫 Blur-to-Clear photo questions on/off (default ON)
   socket.on('host:setBlur', ({code,on}) => { const r=rooms[code]; if(!r) return; r.blurImg = !!on; broadcast(code); });
 
@@ -806,6 +860,7 @@ io.on('connection', (socket) => {
     const r = rooms[code]; if(!r || r.status!=='question' || r.paused) return;
     const p = r.players[name]; if(!p) return;
     ci = +ci; if(!Number.isInteger(ci) || ci<0 || ci>24) return;
+    if (p.chaosAt && Date.now()-p.chaosAt < 700){ touch(socket,code,name); return; }   // 🌪 cards just moved: ignore a tap aimed at the OLD layout, resync instead
     if(!p.markTs) p.markTs = {}; if(!p.cards) p.cards = {};
     const old = markCell(p, r.curIdx);
     if (old!==undefined){

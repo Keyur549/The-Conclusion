@@ -3251,7 +3251,7 @@ setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(
 </script>
 <style id="up-pjbst">
 /* 🚀 Booster control on the projector screen (host only: faint until hovered) */
-#pj .pjbstw{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:7;display:none;gap:6px;align-items:center;opacity:.35;transition:opacity .2s}
+#pj .pjbstw{position:fixed;left:calc(max(14px,env(safe-area-inset-left,0px)) + 58px);bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:7;display:none;gap:6px;align-items:center;opacity:.35;transition:opacity .2s}
 #pj .pjbstw:hover,#pj .pjbstw:focus-within,#pj .pjbstw.on{opacity:1}
 #pj .pjbstw button{border:0;border-radius:99px;padding:10px 16px;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(90deg,#f97316,#dc2626);cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 #pj .pjbstw.on button{background:linear-gradient(90deg,#16a34a,#15803d)}
@@ -3274,6 +3274,29 @@ setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(
   var s=w.querySelector('.pjbp'); if(document.activeElement!==s){ var v=String(boostPct()); if(s.value!==v) s.value=v; } }catch(e){} },400);
  document.addEventListener('keydown',function(e){ try{ if((e.key==='b'||e.key==='B')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ var pj=document.getElementById('pj'); var t=e.target&&e.target.tagName; if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT') return;
    if(pj&&pj.style.display!=='none'&&state.room&&state.room.status==='question') hostBoost(); } }catch(x){} });
+})();
+</script>
+<style id="up-pjch">
+/* 🌪 Chaos Card on the projector: live banner (top centre) + on/off switch (bottom-left) */
+#pj .pjzcw{position:fixed;left:calc(max(14px,env(safe-area-inset-left,0px)) + 58px);bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 56px);z-index:7;display:none;opacity:.35;transition:opacity .2s}
+#pj .pjzcw:hover,#pj .pjzcw:focus-within{opacity:1}
+#pj .pjzcw button{border:0;border-radius:99px;padding:10px 16px;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(90deg,#7c3aed,#db2777);cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+#pj .pjzcw button.off{background:#4b5563}
+#pj .pjzbn{position:fixed;top:max(12px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:7;display:none;max-width:78vw;text-align:center;padding:.35em 1.3em;border-radius:99px;font-weight:900;font-size:clamp(1.1rem,3.4vh,2.4rem);color:#fff;background:linear-gradient(90deg,#7c3aed,#db2777);box-shadow:0 0 34px rgba(219,39,119,.7);animation:pjzp 1.2s ease-in-out infinite alternate}
+@keyframes pjzp{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.06)}}
+</style>
+<script id="up-pjch">
+/* 🌪 Chaos Card controls on the projector screen */
+function hostChaosOn(on){ socket.emit('host:chaosOn',{code:state.code,on:!!on}); }
+(function(){
+ function pjEl(cls,make){ var pj=document.getElementById('pj'); if(!pj) return null; var e=pj.querySelector('.'+cls); if(!e){ e=make(); e.className=cls; pj.appendChild(e); } return e; }
+ setInterval(function(){ try{ var pj=document.getElementById('pj'); if(!pj||pj.style.display==='none') return; var r=state.room; if(!r) return;
+  var w=pjEl('pjzcw',function(){ var d=document.createElement('div'); d.innerHTML='<button type="button"></button>'; d.querySelector('button').onclick=function(e){ e.stopPropagation(); hostChaosOn(!!state.room.chOff); }; return d; });
+  w.style.display=(r.status==='question')?'block':'none'; var bt=w.querySelector('button'), t=r.chOff?'🌪 Chaos Card બંધ':'🌪 Chaos Card ચાલુ'; if(bt.textContent!==t) bt.textContent=t; bt.className=r.chOff?'off':'';
+  var b=pjEl('pjzbn',function(){ return document.createElement('div'); }), txt='';
+  var ev=(r.chaosLog||[]).filter(function(e){ return e.qi===r.curIdx; }).slice(-2);
+  if((r.status==='question'||r.status==='locked')&&ev.length){ txt=ev.map(function(e){ return '🌪 '+e.from+(e.fz?' ('+e.fz+')':'')+' → '+e.to; }).join('   |   '); }
+  b.style.display=txt?'block':'none'; if(txt&&b.textContent!==txt) b.textContent=txt; }catch(e){} },400);
 })();
 </script>
 </body>
