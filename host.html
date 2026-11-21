@@ -3278,7 +3278,7 @@ setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(
 </script>
 <style id="up-pjch">
 /* 🌪 Chaos Card on the projector: live banner (top centre) + on/off switch (bottom-left) */
-#pj .pjzcw{position:fixed;left:calc(max(14px,env(safe-area-inset-left,0px)) + 58px);bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 56px);z-index:7;display:none;opacity:.35;transition:opacity .2s}
+#pj .pjzcw{gap:8px;position:fixed;left:calc(max(14px,env(safe-area-inset-left,0px)) + 58px);bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 56px);z-index:7;display:none;opacity:.35;transition:opacity .2s}
 #pj .pjzcw:hover,#pj .pjzcw:focus-within{opacity:1}
 #pj .pjzcw button{border:0;border-radius:99px;padding:10px 16px;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(90deg,#7c3aed,#db2777);cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 #pj .pjzcw button.off{background:#4b5563}
@@ -3288,14 +3288,16 @@ setInterval(function(){ try{ var r=(typeof state!=='undefined')&&state.room; if(
 <script id="up-pjch">
 /* 🌪 Chaos Card controls on the projector screen */
 function hostChaosOn(on){ socket.emit('host:chaosOn',{code:state.code,on:!!on}); }
+function chLiveH(r){ if(r.chMode==='on') return true; if(r.chMode==='off') return false; return (r.usedIdx||[]).indexOf(r.curIdx)>=14; }
+function hostChaosMode(m){ socket.emit('host:chaosMode',{code:state.code,mode:m}); }
 (function(){
  function pjEl(cls,make){ var pj=document.getElementById('pj'); if(!pj) return null; var e=pj.querySelector('.'+cls); if(!e){ e=make(); e.className=cls; pj.appendChild(e); } return e; }
  setInterval(function(){ try{ var pj=document.getElementById('pj'); if(!pj||pj.style.display==='none') return; var r=state.room; if(!r) return;
-  var w=pjEl('pjzcw',function(){ var d=document.createElement('div'); d.innerHTML='<button type="button"></button>'; d.querySelector('button').onclick=function(e){ e.stopPropagation(); hostChaosOn(!!state.room.chOff); }; return d; });
-  w.style.display=(r.status==='question')?'block':'none'; var bt=w.querySelector('button'), t=r.chOff?'🌪 Chaos Card બંધ':'🌪 Chaos Card ચાલુ'; if(bt.textContent!==t) bt.textContent=t; bt.className=r.chOff?'off':'';
+  var w=pjEl('pjzcw',function(){ var d=document.createElement('div'); d.innerHTML='<button type="button"></button>'; d.querySelector('button').onclick=function(e){ e.stopPropagation(); var m=state.room.chMode; hostChaosMode(m==='on'?'off':(m==='off'?'auto':'on')); }; return d; });
+  w.style.display=(r.status==='question')?'flex':'none'; var bt=w.querySelector('button'), lv=chLiveH(r), t=r.chMode==='on'?'🌪 Chaos Card ચાલુ':(r.chMode==='off'?'🌪 Chaos Card બંધ':(lv?'🌪 Chaos Card ચાલુ (Auto)':'🌪 Chaos Auto · પ્રશ્ન 15 થી')); if(bt.textContent!==t) bt.textContent=t; bt.className=(r.chMode==='off')?'off':((r.chMode!=='on'&&!lv)?'off':'');
   var b=pjEl('pjzbn',function(){ return document.createElement('div'); }), txt='';
   var ev=(r.chaosLog||[]).filter(function(e){ return e.qi===r.curIdx; }).slice(-2);
-  if((r.status==='question'||r.status==='locked')&&ev.length){ txt=ev.map(function(e){ return e.blk?'🛡 '+e.to+' નું Shield! '+e.from+' નું Chaos પાછું ફર્યું'  :'🌪 '+e.from+(e.fz?' ('+e.fz+')':'')+' → '+e.to; }).join('   |   '); }
+  if((r.status==='question'||r.status==='locked')&&ev.length){ txt=ev.map(function(e){ return e.blk?'🛡 '+e.to+' નું કવચ! '+e.from+' નું Chaos પાછું ફર્યું'  :'🌪 '+e.from+(e.fz?' ('+e.fz+')':'')+' → '+e.to; }).join('   |   '); }
   b.style.display=txt?'block':'none'; if(txt&&b.textContent!==txt) b.textContent=txt; }catch(e){} },400);
 })();
 </script>

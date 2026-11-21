@@ -136,6 +136,7 @@ const rooms = {}; // code -> room object
 const STREAK_LEN = 3, STREAK_BONUS = 10, FAST_BONUS = 1;
 
 // ---------- Phases (8 normal + 1 ⚡ Fast Round) · Fast-Round Bet · Top-3 speed bonus ----------
+const PWR_MIN_PHASE = 1;   // 🃏 Power Cards from Phase 1 (set 2 to unlock them only from Phase 2)
 const PHASE_LEN = 9, BET_WIN = 10, BET_LOSE = -5, SPEED_PTS = [3,2,1], BET_MS = 8000, FAST_SEC = 20;
 const INTRO_SEC = 7.5;
 const PHASE_NAMES_DEF = ['આરંભ','મનન','સાધના','સિદ્ધિ'];
@@ -422,6 +423,9 @@ setInterval(() => {
 // 🛡 SILENT Chaos Shield: a player who has given 3 correct answers in a row (counting only questions whose answer is on his own card) secretly earns a Shield. He is never told
 //    (that would leak that his answers were right); it only shows when it blocks: the attack is bounced back, i.e. the ATTACKER's own empty cells get shuffled instead.
 // Fairness: a player can be hit at most CH_MAX_HITS times per game and once per question; you can never hit yourself.
+// 🌪 Chaos Card timing: AUTO = it switches itself on from question #CH_AUTO_Q of the game (so it works even if the Host forgets). Host can force it ON earlier or OFF from the projector (r.chMode = 'on' | 'off').
+const CH_AUTO_Q = 15;
+function chLive(r){ if(r.chMode==='on') return true; if(r.chMode==='off') return false; return qPos(r,r.curIdx)>=CH_AUTO_Q-1; }
 const CH_MAX_HITS = 2;
 const chKey = z => String(z||'').trim().toLowerCase();
 // number of Shields a player has earned so far = completed runs of 3 correct answers (questions BEFORE the current one only), minus the ones already used
@@ -753,7 +757,7 @@ io.on('connection', (socket) => {
   // 🌪 fire the Chaos Card at a player or a zone
   socket.on('player:chaos', ({code,name,kind,target}, cb) => {
     seen(code,name); const r=rooms[code]; const fail=m=>{ cb&&cb({ok:false,error:m}); };
-    if(!r || r.status!=='question' || r.paused || r.chOff) return fail('હમણાં Chaos Card વાપરી શકાય નહિ.');
+    if(!r || r.status!=='question' || r.paused || !chLive(r)) return fail('Chaos Card હજી ચાલુ થયું નથી (પ્રશ્ન '+CH_AUTO_Q+' થી ચાલુ થશે).');
     const p=r.players[name]; if(!p) return fail('Player મળ્યો નહિ.');
     if(p.cc) return fail('તમારું Chaos Card વપરાઈ ગયું છે. દરેકને ફક્ત 1 મળે છે.');
     const okT=t=>(t.chHits||0)<CH_MAX_HITS && t.chHitQ!==r.curIdx;
@@ -771,7 +775,7 @@ io.on('connection', (socket) => {
     r.chaosLog.push(ent); if(r.chaosLog.length>40) r.chaosLog.shift();
     broadcast(code); cb&&cb({ok:true,to:label,n:1,blocked:!!ent.blk});
   });
-  socket.on('host:chaosOn', ({code,on}) => { const r=rooms[code]; if(!r) return; r.chOff=!on; broadcast(code); });
+  socket.on('host:chaosMode', ({code,mode}) => { const r=rooms[code]; if(!r) return; r.chMode=(mode==='on'||mode==='off')?mode:undefined; broadcast(code); });
 
   // 🌫 Blur-to-Clear photo questions on/off (default ON)
   socket.on('host:setBlur', ({code,on}) => { const r=rooms[code]; if(!r) return; r.blurImg = !!on; broadcast(code); });
@@ -886,6 +890,7 @@ io.on('connection', (socket) => {
     if(!r || r.status!=='question' || r.paused) return fail('હમણાં Card વાપરી શકાય નહિ.');
     const p = r.players[name]; if(!p) return fail('Player મળ્યો નહિ.');
     if(!CARD_KEYS.includes(card)) return fail('ખોટું Card.');
+    { const _ps=qPos(r,r.curIdx); if(_ps>=0 && Math.floor(_ps/PHASE_LEN)+1<PWR_MIN_PHASE) return fail('🃏 Power Cards Phase '+PWR_MIN_PHASE+' થી ચાલુ થશે.'); }
     if(!p.cards) p.cards = {}; if(!p.markTs) p.markTs = {};
     const cur = r.curIdx;
     if (p.cards[card]!=null) return fail('આ Card તમે પહેલેથી વાપરી લીધું છે.');

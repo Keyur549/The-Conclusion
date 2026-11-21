@@ -1500,16 +1500,18 @@ body.chshake .grid{animation:chshake .5s ease 2}@keyframes chshake{0%,100%{trans
 var CH={tab:'player',sel:null,tm:null};
 function chKey2(z){ return String(z||'').trim().toLowerCase(); }
 function chEsc(t){ return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]}); }
+var CH_AUTO_Q=15;
+function chLive(r){ if(r.chMode==='on') return true; if(r.chMode==='off') return false; return (r.usedIdx||[]).indexOf(r.curIdx)>=CH_AUTO_Q-1; }
 function chBtnHTML(r,p){ try{ if(!p) return ''; var q=r.curIdx, out='';
-  if(p.chsb&&p.chsb.qi===q&&(r.status==='question'||r.status==='locked')) out+='<div class="chbn" style="background:linear-gradient(135deg,#0e7490,#164e63)">🛡 <b>SHIELD!</b> '+chEsc(p.chsb.from)+' નું Chaos તમારા Shield એ રોક્યું અને એના પર જ પાછું ફર્યું! 😎</div>';
-  if(p.chz&&p.chz.qi===q&&p.chz.refl&&(r.status==='question'||r.status==='locked')) out+='<div class="chbn">🛡 <b>પાછું ફર્યું!</b> '+chEsc(p.chz.from)+' પાસે Chaos Shield હતું — તમારા જ <b>ખાલી ખાના</b> ફરી ગયા. જવાબ આપેલા ખાના જ્યાં હતા ત્યાં જ છે.</div>';
+  if(p.chsb&&p.chsb.qi===q&&(r.status==='question'||r.status==='locked')) out+='<div class="chbn" style="background:linear-gradient(135deg,#0e7490,#164e63)">🛡 <b>KAVACH!</b> '+chEsc(p.chsb.from)+' નું Chaos તમારા કવચ એ રોક્યું અને એના પર જ પાછું ફર્યું! 😎</div>';
+  if(p.chz&&p.chz.qi===q&&p.chz.refl&&(r.status==='question'||r.status==='locked')) out+='<div class="chbn">🛡 <b>પાછું ફર્યું!</b> '+chEsc(p.chz.from)+' પાસે Chaos કવચ હતું — તમારા જ <b>ખાલી ખાના</b> ફરી ગયા. જવાબ આપેલા ખાના જ્યાં હતા ત્યાં જ છે.</div>';
   else if(p.chz&&p.chz.qi===q&&(r.status==='question'||r.status==='locked')) out+='<div class="chbn">🌪 <b>CHAOS!</b> '+chEsc(p.chz.from)+' એ તમારા <b>ખાલી ખાના</b> ફેરવી દીધા. જવાબ આપેલા ખાના જ્યાં હતા ત્યાં જ છે.</div>';
-  if(r.chOff||r.status!=='question'||(r.nPlayers||0)<2) return out;
-  if(p.cc) return out+'<div class="chst">'+(p.cc.blk?'🛡 '+chEsc(p.cc.to)+' પાસે Shield હતું — Chaos તમારા પર પાછું ફર્યું!':'🌪 તમારું Chaos Card વપરાઈ ગયું ✔ → '+chEsc(p.cc.to))+'</div>';
+  if(!chLive(r)||r.status!=='question'||(r.nPlayers||0)<2) return out;
+  if(p.cc) return out+'<div class="chst">'+(p.cc.blk?'🛡 '+chEsc(p.cc.to)+' પાસે કવચ હતું — Chaos તમારા પર પાછું ફર્યું!':'🌪 તમારું Chaos Card વપરાઈ ગયું ✔ → '+chEsc(p.cc.to))+'</div>';
   return out+'<button class="chb" onclick="chOpen()">🌪 Chaos Card વાપરો<small>ફક્ત 1 વાર · કોઈ બીજા Player ના ખાલી ખાના ફેરવો</small></button>'; }catch(e){ return ''; } }
 function chClose(){ var m=document.getElementById('chm'); if(m) m.remove(); CH.sel=null; }
-function chOpen(){ var r=state.room, p=r&&r.players&&r.players[state.name]; if(!r||!p||r.status!=='question'||p.cc||r.chOff) return; chClose(); CH.tab='player'; CH.sel=null;
-  var m=document.createElement('div'); m.id='chm'; m.innerHTML='<div class="chp"><h3>🌪 Chaos Card</h3><div class="chn">ફક્ત 1 વાર. જેના પર વાપરશો તેના <b>ખાલી ખાના</b> ફરી જશે; જવાબ આપેલા ખાના ફરતા નથી. દરેક Player પર ગેમમાં વધુમાં વધુ 2 વાર થઈ શકે. (કોઈ પાસે Shield હોય તો Chaos તમારા પર પાછું ફરે!)</div>'+
+function chOpen(){ var r=state.room, p=r&&r.players&&r.players[state.name]; if(!r||!p||r.status!=='question'||p.cc||!chLive(r)) return; chClose(); CH.tab='player'; CH.sel=null;
+  var m=document.createElement('div'); m.id='chm'; m.innerHTML='<div class="chp"><h3>🌪 Chaos Card</h3><div class="chn">ફક્ત 1 વાર. જેના પર વાપરશો તેના <b>ખાલી ખાના</b> ફરી જશે; જવાબ આપેલા ખાના ફરતા નથી. દરેક Player પર ગેમમાં વધુમાં વધુ 2 વાર થઈ શકે. (કોઈ પાસે કવચ હોય તો Chaos તમારા પર પાછું ફરે!)</div>'+
    '<div id="chpp"><input id="chq" placeholder="Player નું નામ લખો…" autocomplete="off" oninput="chFind(this.value)"><div class="chr" id="chres"></div></div>'+
    '<div class="chm2" id="chmsg"></div><div class="cha"><button class="no" onclick="chClose()">રદ</button><button class="go" id="chgo" disabled onclick="chSend()">🌪 મોકલો</button></div></div>';
   m.addEventListener('click',function(e){ if(e.target===m) chClose(); }); document.body.appendChild(m);
@@ -1521,9 +1523,9 @@ function chFind(v){ clearTimeout(CH.tm); CH.sel=null; chGo(); var box=document.g
 function chPick(i){ var x=(window.__chL||[])[i]; if(!x) return; CH.sel=x; var bs=document.querySelectorAll('#chres button'); for(var j=0;j<bs.length;j++) bs[j].className=(j===i)?'on':''; chGo(); }
 function chSend(){ var kind='player', target=CH.sel&&CH.sel.k; if(!target) return; var b=document.getElementById('chgo'); if(b) b.disabled=true;
   socket.emit('player:chaos',{code:state.code,name:state.name,kind:kind,target:target},function(res){ if(res&&res.ok){ chClose(); render(); } else { var m=document.getElementById('chmsg'); if(m) m.textContent=(res&&res.error)||'Chaos થઈ શક્યું નહિ.'; chGo(); } }); }
-setInterval(function(){ try{ var r=state.room,p=r&&r.players&&r.players[state.name]; if(document.getElementById('chm')&&(!r||!p||r.status!=='question'||p.cc||r.chOff)) chClose(); }catch(e){} },500);
+setInterval(function(){ try{ var r=state.room,p=r&&r.players&&r.players[state.name]; if(document.getElementById('chm')&&(!r||!p||r.status!=='question'||p.cc||!chLive(r))) chClose(); }catch(e){} },500);
 (function(){ var sn=0; setInterval(function(){ try{ var r=state.room,p=r&&r.players&&r.players[state.name]; if(!r||!p||!p.chsb||p.chsb.ts===sn) return; sn=p.chsb.ts; if(p.chsb.qi!==r.curIdx) return;
-  var d=document.createElement('div'); d.id='chfx'; d.style.background='rgba(8,70,90,.86)'; d.innerHTML='<div style="text-align:center"><i>🛡</i>SHIELD!</div>'; document.body.appendChild(d); setTimeout(function(){ try{d.remove();}catch(e){} },1150);
+  var d=document.createElement('div'); d.id='chfx'; d.style.background='rgba(8,70,90,.86)'; d.innerHTML='<div style="text-align:center"><i>🛡</i>KAVACH!</div>'; document.body.appendChild(d); setTimeout(function(){ try{d.remove();}catch(e){} },1150);
   try{ if(navigator.vibrate) navigator.vibrate([40,30,120]); }catch(e){} }catch(e){} },250); })();
 (function(){ var seen=0; setInterval(function(){ try{ var r=state.room,p=r&&r.players&&r.players[state.name]; if(!r||!p||!p.chz||p.chz.ts===seen) return; seen=p.chz.ts;
   if(r.status!=='question'||p.chz.qi!==r.curIdx) return; window.__chLock=Date.now()+1000;
