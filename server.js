@@ -424,8 +424,10 @@ setInterval(() => {
 //    (that would leak that his answers were right); it only shows when it blocks: the attack is bounced back, i.e. the ATTACKER's own empty cells get shuffled instead.
 // Fairness: a player can be hit at most CH_MAX_HITS times per game and once per question; you can never hit yourself.
 // 🌪 Chaos Card timing: AUTO = it switches itself on from question #CH_AUTO_Q of the game (so it works even if the Host forgets). Host can force it ON earlier or OFF from the projector (r.chMode = 'on' | 'off').
-const CH_AUTO_Q = 15;
-function chLive(r){ if(r.chMode==='on') return true; if(r.chMode==='off') return false; return qPos(r,r.curIdx)>=CH_AUTO_Q-1; }
+const CH_AUTO_Q = 15;   // <-- change this ONE number (e.g. 12 or 18) to move the auto-start; clients read it from the room
+function chQ(r){ return r.chAutoQ||CH_AUTO_Q; }
+function chLive(r){ if(r.chMode==='on') return true; if(r.chMode==='off') return false; return qPos(r,r.curIdx)>=chQ(r)-1; }
+const CH_LIST = 12;     // how many random names the Chaos picker shows at once
 const CH_MAX_HITS = 2;
 const chKey = z => String(z||'').trim().toLowerCase();
 // number of Shields a player has earned so far = completed runs of 3 correct answers (questions BEFORE the current one only), minus the ones already used
@@ -619,7 +621,7 @@ io.on('connection', (socket) => {
     rooms[code] = {
       code, hostName, maxPlayers: maxPlayers||null, status:'lobby',
       questions: parsed.questions, usedIdx:[], curIdx:null, timerEnd:null,
-      players:{}, winners:null, revealStep:0, createdAt: Date.now(), zones: cleanZones(zones), phaseNames: cleanPhaseNames(phaseNames),
+      players:{}, winners:null, revealStep:0, chAutoQ: CH_AUTO_Q, createdAt: Date.now(), zones: cleanZones(zones), phaseNames: cleanPhaseNames(phaseNames),
       gTitle: cleanTxt(gTitle,GT_DEF), gSub: cleanTxt(gSub,GS_DEF), theme: cleanTheme2(theme)
     };
     socket.join(code);
@@ -746,33 +748,35 @@ io.on('connection', (socket) => {
   });
 
   // 🌪 Chaos Card: look up players by name (max 8 matches; the full player list is never sent to phones)
+  // 🌪 list of players the Chaos Card can be fired at: ONLY players of OTHER zones, online, still hittable. Without a search text a random handful is returned; with one, the matching names (tap a name = fire).
   socket.on('player:chaosFind', ({code,name,q}, cb) => {
-    seen(code,name); const r=rooms[code]; if(!r||!r.players[name]) return cb&&cb({ok:false,list:[]});
-    q=String(q||'').trim().toLowerCase(); if(!q) return cb&&cb({ok:true,list:[]});
-    const list=[]; for (const [k,t] of Object.entries(r.players)){
-      if(k===name || !String(t.baseName||k).toLowerCase().includes(q) || !chOnline(r,code,k,t)) continue;
-      list.push({k, n:t.baseName||k, z:t.zone||'', a:t.avatar||''}); if(list.length>=8) break; }
-    cb&&cb({ok:true,list});
+    seen(code,name); const r=rooms[code]; const me=r&&r.players[name]; if(!r||!me) return cb&&cb({ok:false,list:[]});
+    const mz=String(me.zone||'').trim().toLowerCase(), pool=[]; q=String(q||'').trim().toLowerCase().slice(0,40);
+    for (const [k,t] of Object.entries(r.players)){
+      if(k===name || (q && !String(t.baseName||k).toLowerCase().includes(q)) || (mz && String(t.zone||'').trim().toLowerCase()===mz) || (t.chHits||0)>=CH_MAX_HITS || t.chHitQ===r.curIdx || !chOnline(r,code,k,t)) continue;
+      pool.push({k, n:t.baseName||k, z:t.zone||'', a:t.avatar||''}); }
+    for (let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    cb&&cb({ok:true,list:pool.slice(0,CH_LIST),total:pool.length});
   });
   // 🌪 fire the Chaos Card at a player or a zone
   socket.on('player:chaos', ({code,name,kind,target}, cb) => {
     seen(code,name); const r=rooms[code]; const fail=m=>{ cb&&cb({ok:false,error:m}); };
-    if(!r || r.status!=='question' || r.paused || !chLive(r)) return fail('Chaos Card હજી ચાલુ થયું નથી (પ્રશ્ન '+CH_AUTO_Q+' થી ચાલુ થશે).');
+    if(!r || r.status!=='question' || r.paused || !chLive(r)) return fail('Chaos Card હજી ચાલુ થયું નથી (પ્રશ્ન '+chQ(r)+' થી ચાલુ થશે).');
     const p=r.players[name]; if(!p) return fail('Player મળ્યો નહિ.');
     if(p.cc) return fail('તમારું Chaos Card વપરાઈ ગયું છે. દરેકને ફક્ત 1 મળે છે.');
     const okT=t=>(t.chHits||0)<CH_MAX_HITS && t.chHitQ!==r.curIdx;
     const t=r.players[target]; if(kind==='zone' || !t || target===name) return fail('Player મળ્યો નહિ.');
+    if(String(p.zone||'').trim() && String(t.zone||'').trim().toLowerCase()===String(p.zone).trim().toLowerCase()) return fail('તમારા પોતાના Zone ના Player પર Chaos થઈ શકે નહિ.');
     if(!okT(t)) return fail('આ Player પર હમણાં Chaos થઈ શકે નહિ (એ પહેલેથી Chaos માં આવી ચૂક્યો છે). બીજો પસંદ કરો.');
     const label=t.baseName||target, victims=[t];
     const now=Date.now(), from=(p.baseName||name)+(p.zone?' · '+String(p.zone).trim():'');
-    r.chaosLog=r.chaosLog||[]; const ent={qi:r.curIdx, from:p.baseName||name, fz:String(p.zone||'').trim(), to:label, n:1, ts:now};
+    const ent={};
     if(chShields(r,t)>0){        // 🛡 silent Shield: the victim is safe, the attack bounces back onto the ATTACKER's empty cells (not counted as a hit)
       t.chShUsed=(t.chShUsed||0)+1; t.chsb={qi:r.curIdx, from:p.baseName||name, ts:now};
       softShuffle(p); p.chz={qi:r.curIdx, from:label, ts:now, refl:true}; p.chaosAt=now; p.cc={qi:r.curIdx, to:label, ts:now, blk:true}; ent.blk=true;
     } else {
       softShuffle(t); t.chz={qi:r.curIdx, from, ts:now}; t.chaosAt=now; t.chHits=(t.chHits||0)+1; t.chHitQ=r.curIdx; p.cc={qi:r.curIdx, to:label, ts:now};
     }
-    r.chaosLog.push(ent); if(r.chaosLog.length>40) r.chaosLog.shift();
     broadcast(code); cb&&cb({ok:true,to:label,n:1,blocked:!!ent.blk});
   });
   socket.on('host:chaosMode', ({code,mode}) => { const r=rooms[code]; if(!r) return; r.chMode=(mode==='on'||mode==='off')?mode:undefined; broadcast(code); });
